@@ -3,21 +3,33 @@
 import { useEffect } from "react";
 import { socket } from "@/lib/socket";
 import { Navigation } from "@/components/Navigation";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const isPublic = pathname?.startsWith('/menu/');
+  const isLoginPage = pathname === '/login';
 
   useEffect(() => {
+    // Socket connection
     socket.connect();
+
+    // Auth check
+    if (!isPublic && !isLoginPage) {
+      const isLoggedIn = localStorage.getItem("isLoggedIn");
+      if (!isLoggedIn) {
+        router.push("/login");
+      }
+    }
+
     return () => {
       socket.disconnect();
     };
-  }, []);
+  }, [pathname, isPublic, isLoginPage, router]);
 
-  if (isPublic) {
-    return <main className="bg-white min-h-screen relative scroll-smooth">{children}</main>;
+  if (isPublic || isLoginPage) {
+    return <main className="min-h-screen relative scroll-smooth">{children}</main>;
   }
 
   return (

@@ -59,7 +59,8 @@ export default function POSPage() {
       ]);
       setCategories(["All", ...cats.data.data]);
       setMenu(items.data.data);
-      setTables(tbls.data.data.filter((t: any) => t.status === 'occupied' || t.status === 'free'));
+      // Fixed: Case sensitive check for PostgreSQL/Prisma
+      setTables(tbls.data.data.filter((t: any) => t.status === 'OCCUPIED' || t.status === 'FREE'));
       setOrders(ords.data.data);
     } catch (error) {
       toast.error("Failed to load POS data");
@@ -102,8 +103,8 @@ export default function POSPage() {
 
     try {
       const tableObj = tables.find(t => t.id === selectedTable);
-      if (tableObj.currentOrder) {
-        await api.post(`/orders/${tableObj.currentOrder}/add-items` || `/orders/${tableObj.currentOrder.id}/add-items`, { items: cart });
+      if (tableObj.currentOrderId) {
+        await api.post(`/orders/${tableObj.currentOrderId}/add-items`, { items: cart });
       } else {
         await api.post('/orders', { tableId: selectedTable, items: cart });
       }
@@ -117,17 +118,15 @@ export default function POSPage() {
 
   const openCheckout = () => {
     const tableObj = tables.find(t => t.id === selectedTable);
-    if (!tableObj || !tableObj.currentOrder) return toast.error("No active order for this table");
+    if (!tableObj || !tableObj.currentOrderId) return toast.error("No active order for this table");
 
-    // find the full order object from orders state
-    const orderObj = orders.find(o => o.id === tableObj.currentOrder || o.id === tableObj.currentOrder.id);
+    const orderObj = orders.find(o => o.id === tableObj.currentOrderId);
     if (!orderObj) return toast.error("Could not load order details");
 
     setActiveOrder(orderObj);
-    // prefill half-half just as an example default for split
     setSplitPayments([
-      { method: 'card', amount: Number((orderObj.total / 2).toFixed(2)) },
-      { method: 'cash', amount: Number((orderObj.total / 2).toFixed(2)) }
+      { method: 'card', amount: Number((orderObj.totalAmount / 2).toFixed(2)) },
+      { method: 'cash', amount: Number((orderObj.totalAmount / 2).toFixed(2)) }
     ]);
     setShowCheckout(true);
   };
@@ -137,7 +136,7 @@ export default function POSPage() {
       const payload: any = { paymentMethod: splitMethod === 'single' ? singlePayment : 'split' };
       if (splitMethod === 'split') {
         const totalSplit = splitPayments.reduce((sum, p) => sum + Number(p.amount), 0);
-        if (Math.abs(totalSplit - activeOrder.total) > 0.1) {
+        if (Math.abs(totalSplit - activeOrder.totalAmount) > 0.1) {
            return toast.error("Split amounts must equal total bill");
         }
         payload.splitPayments = splitPayments;
@@ -146,7 +145,6 @@ export default function POSPage() {
       await api.post(`/orders/${activeOrder.id}/pay`, payload);
       toast.success("Payment successful!");
 
-      // Print Receipt
       window.print();
 
       setShowCheckout(false);
@@ -163,76 +161,86 @@ export default function POSPage() {
 
   return (
     <>
-      <div className="flex h-full animate-fade-in bg-[var(--surface)] no-print">
-        <div className="flex-1 flex flex-col overflow-hidden pt-4 pb-20 md:pb-4 px-4 md:px-6 z-0">
-          <div className="flex gap-3 overflow-x-auto pb-4 shrink-0 no-scrollbar">
+      <div className="flex h-full animate-fade-in bg-slate-50 no-print">
+        <div className="flex-1 flex flex-col overflow-hidden pt-6 pb-20 md:pb-6 px-4 md:px-10 z-0">
+          <div className="flex gap-3 overflow-x-auto pb-6 shrink-0 no-scrollbar">
             {categories.map(c => (
               <button 
                 key={c} 
                 onClick={() => setActiveCategory(c)}
-                className={`px-5 py-2.5 rounded-full font-medium whitespace-nowrap transition-colors border ${activeCategory === c ? 'bg-[#1F2937] text-white border-transparent' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                className={`px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 border ${activeCategory === c ? 'bg-[#FF6B35] text-white border-transparent shadow-lg shadow-orange-500/20' : 'bg-white text-slate-400 border-slate-100 hover:bg-white hover:shadow-md'}`}
               >
                 {c}
               </button>
             ))}
           </div>
 
-          <div className="flex-1 overflow-y-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 content-start pb-4 pr-2">
+          <div className="flex-1 overflow-y-auto grid grid-cols-2 lg:grid-cols-4 gap-6 content-start pb-6 pr-2">
             {filteredMenu.map(item => (
               <div 
                 key={item.id} 
                 onClick={() => addToCart(item)}
-                className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 cursor-pointer active:scale-95 transition-transform hover:border-[#FF6B35]/30 hover:shadow-md flex flex-col h-full"
+                className="group bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 cursor-pointer active:scale-95 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-[#FF6B35]/20 flex flex-col items-center text-center relative overflow-hidden"
               >
-                <div className="flex justify-between items-start mb-2">
-                  <div className={`w-3 h-3 rounded-full mt-1 shrink-0 ${item.isVeg ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                  <span className="font-bold text-[#FF6B35]">₹{item.price}</span>
+                <div className="absolute top-4 left-4">
+                  <div className={`w-2.5 h-2.5 rounded-full ${item.isVeg ? 'bg-emerald-500' : 'bg-rose-500'} shadow-[0_0_8px]`}></div>
                 </div>
-                <h3 className="font-semibold text-gray-900 leading-tight mb-2 flex-grow">{item.name}</h3>
-                <p className="text-xs text-gray-500 truncate overflow-hidden">{item.description}</p>
+                
+                <h3 className="font-black text-slate-800 leading-tight mb-2 text-lg tracking-tight px-2">{item.name}</h3>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">{item.category}</p>
+                
+                <div className="mt-auto bg-slate-50 w-full py-3 rounded-2xl group-hover:bg-[#FF6B35]/10 group-hover:text-[#FF6B35] transition-colors">
+                  <span className="font-black text-xl">₹{item.price}</span>
+                </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="hidden md:flex flex-col w-[400px] bg-white border-l border-gray-200 shadow-xl z-10 shrink-0">
-          <div className="p-5 border-b border-gray-100 flex flex-col gap-3">
-            <h2 className="text-2xl font-bold text-gray-900">Order Management</h2>
-            <select 
-              className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl p-3 font-medium outline-none focus:ring-2 focus:ring-[#FF6B35]/50 focus:border-[#FF6B35]"
-              value={selectedTable}
-              onChange={(e) => setSelectedTable(e.target.value)}
-            >
-              <option value="" disabled>Select Table</option>
-              {tables.map(t => (
-                <option key={t.id} value={t.id} className="font-medium">
-                  Table {t.tableNumber} {t.currentOrder ? '• Active Order' : '• Free'}
-                </option>
-              ))}
-            </select>
-            {selectedTable && tables.find(t => t.id === selectedTable)?.currentOrder && (
-               <button onClick={openCheckout} className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl transition-colors">
+        <div className="hidden md:flex flex-col w-[450px] bg-white border-l border-slate-100 shadow-2xl z-10 shrink-0">
+          <div className="p-8 border-b border-slate-50 space-y-4">
+            <h2 className="text-3xl font-black text-slate-900 tracking-tighter">Current Order</h2>
+            <div className="relative">
+              <select 
+                className="w-full bg-slate-50 border-2 border-slate-50 text-slate-900 rounded-[1.5rem] p-4 font-black text-sm uppercase tracking-wider outline-none focus:ring-4 focus:ring-[#FF6B35]/10 focus:border-[#FF6B35] transition-all appearance-none cursor-pointer"
+                value={selectedTable}
+                onChange={(e) => setSelectedTable(e.target.value)}
+              >
+                <option value="" disabled>SELECT TABLE</option>
+                {tables.map(t => (
+                  <option key={t.id} value={t.id} className="font-bold">
+                    T{t.tableNumber} {t.currentOrderId ? '• BUSY' : '• FREE'}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                 <Grid size={18} />
+              </div>
+            </div>
+            {selectedTable && tables.find(t => t.id === selectedTable)?.currentOrderId && (
+               <button onClick={openCheckout} className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-5 rounded-[1.5rem] transition-all shadow-xl shadow-emerald-500/20 active:scale-95 uppercase tracking-widest text-xs">
                   Checkout Table
                </button>
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-gray-50/50">
+          <div className="flex-1 overflow-y-auto p-8 space-y-4 bg-slate-50/30">
             {cart.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-gray-400">
-                <p>Tap items to add new orders for table</p>
+              <div className="h-full flex flex-col items-center justify-center text-slate-300 gap-4 opacity-50">
+                <ShoppingBag size={48} strokeWidth={1} />
+                <p className="font-bold text-sm uppercase tracking-widest">Bag is Empty</p>
               </div>
             ) : (
               cart.map((item, idx) => (
-                <div key={`${item.menuItem}-${idx}`} className="flex items-center justify-between group bg-white border rounded-xl p-3">
+                <div key={`${item.menuItem}-${idx}`} className="flex items-center justify-between group bg-white border-2 border-slate-50 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all">
                   <div className="flex-1 pr-4">
-                    <p className="font-semibold text-gray-900 text-sm">{item.name}</p>
-                    <p className="text-xs text-gray-500">₹{item.price}</p>
+                    <p className="font-black text-slate-800 text-sm tracking-tight">{item.name}</p>
+                    <p className="text-xs font-bold text-[#FF6B35] mt-1">₹{item.price}</p>
                   </div>
-                  <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-1 border">
-                    <button onClick={() => updateQuantity(item.menuItem, -1)} className="w-8 h-8 flex items-center justify-center bg-white rounded shadow-sm text-gray-600 hover:text-black font-bold border border-gray-100">-</button>
-                    <span className="font-bold text-sm w-4 text-center">{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.menuItem, 1)} className="w-8 h-8 flex items-center justify-center bg-white rounded shadow-sm text-[#FF6B35] font-bold border border-gray-100">+</button>
+                  <div className="flex items-center gap-4 bg-slate-50 rounded-2xl px-2 py-1.5 border border-slate-100">
+                    <button onClick={() => updateQuantity(item.menuItem, -1)} className="w-8 h-8 flex items-center justify-center bg-white rounded-xl shadow-sm text-slate-400 hover:text-rose-500 font-black border border-slate-50">-</button>
+                    <span className="font-black text-sm w-4 text-center text-slate-800">{item.quantity}</span>
+                    <button onClick={() => updateQuantity(item.menuItem, 1)} className="w-8 h-8 flex items-center justify-center bg-white rounded-xl shadow-sm text-emerald-500 font-black border border-slate-50">+</button>
                   </div>
                 </div>
               ))
@@ -240,24 +248,26 @@ export default function POSPage() {
           </div>
 
           {cart.length > 0 && (
-            <div className="p-5 border-t border-gray-200 bg-white">
-              <div className="flex justify-between mb-2 text-gray-600 text-sm font-medium">
-                <span>New Subtotal</span>
-                <span>₹{cartTotal.toFixed(2)}</span>
+            <div className="p-8 border-t border-slate-100 bg-white space-y-4">
+              <div className="space-y-2">
+                <div className="flex justify-between text-slate-400 text-xs font-black uppercase tracking-wider">
+                  <span>Subtotal</span>
+                  <span>₹{cartTotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-slate-400 text-xs font-black uppercase tracking-wider">
+                  <span>GST (5%)</span>
+                  <span>₹{gst.toFixed(2)}</span>
+                </div>
               </div>
-              <div className="flex justify-between mb-4 text-gray-600 text-sm font-medium">
-                <span>Tax (5%)</span>
-                <span>₹{gst.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between mb-6 text-2xl font-black text-gray-900">
-                <span>Total Additions</span>
-                <span className="text-[#FF6B35]">₹{grandTotal.toFixed(2)}</span>
+              <div className="flex justify-between items-end mb-4">
+                <span className="text-slate-400 font-black uppercase text-[10px] tracking-widest">Total Bill</span>
+                <span className="text-4xl font-black text-slate-900 tracking-tighter">₹{grandTotal.toFixed(2)}</span>
               </div>
               <button 
                 onClick={placeOrder}
-                className="w-full bg-[#1F2937] hover:bg-black text-white py-4 rounded-xl font-bold text-lg shadow-[0_4px_14px_0_rgba(0,0,0,0.1)] transition-all flex items-center justify-center gap-2"
+                className="w-full bg-[#FF6B35] hover:bg-[#FF8C61] text-white py-6 rounded-[2rem] font-black text-sm uppercase tracking-[0.2em] shadow-2xl shadow-orange-500/30 transition-all flex items-center justify-center gap-3 active:scale-95"
               >
-                Send to Kitchen
+                Send to Cook
               </button>
             </div>
           )}

@@ -37,19 +37,20 @@ export default function Dashboard() {
         <p className="text-gray-500 mt-1">Real-time restaurant performance metrics.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         {[
-          { label: "Total Revenue", value: `₹${stats.revenueToday}`, icon: TrendingUp, color: "bg-[#ECFDF5]", text: "text-[#059669]" },
-          { label: "Orders Today", value: stats.totalOrdersToday, icon: PhilippinePeso, color: "bg-[#EFF6FF]", text: "text-[#2563EB]" },
-          { label: "Active Tables", value: stats.activeTablesCount, icon: Grid, color: "bg-[#FEF2F2]", text: "text-[#DC2626]" },
-          { label: "Avg Wait Time", value: `${stats.avgWaitTime} mins`, icon: Clock, color: "bg-[#FFFbeb]", text: "text-[#D97706]" },
+          { label: "Total Revenue", value: `₹${stats.revenueToday}`, icon: TrendingUp, color: "from-emerald-500/10 to-teal-500/10", text: "text-emerald-600", border: "border-emerald-100" },
+          { label: "Orders Today", value: stats.totalOrdersToday, icon: PhilippinePeso, color: "from-blue-500/10 to-indigo-500/10", text: "text-blue-600", border: "border-blue-100" },
+          { label: "Active Tables", value: stats.activeTablesCount, icon: Grid, color: "from-rose-500/10 to-pink-500/10", text: "text-rose-600", border: "border-rose-100" },
+          { label: "Avg Wait Time", value: `${stats.avgWaitTime} mins`, icon: Clock, color: "from-amber-500/10 to-orange-500/10", text: "text-amber-600", border: "border-amber-100" },
         ].map((stat, i) => (
-          <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-            <div className={`w-12 h-12 rounded-full ${stat.color} ${stat.text} flex items-center justify-center mb-4`}>
-              <stat.icon size={24} />
+          <div key={i} className={`bg-gradient-to-br ${stat.color} rounded-[2rem] p-8 border ${stat.border} shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group overflow-hidden relative`}>
+            <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full bg-white opacity-20 group-hover:scale-150 transition-transform duration-700`}></div>
+            <div className={`w-14 h-14 rounded-2xl bg-white flex items-center justify-center mb-6 shadow-sm ${stat.text}`}>
+              <stat.icon size={28} />
             </div>
-            <h3 className="text-gray-500 font-medium text-sm">{stat.label}</h3>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{stat.value}</p>
+            <h3 className="text-gray-500 font-bold text-sm uppercase tracking-wider">{stat.label}</h3>
+            <p className="text-4xl font-black text-gray-900 mt-2 tracking-tight">{stat.value}</p>
           </div>
         ))}
       </div>

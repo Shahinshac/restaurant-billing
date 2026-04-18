@@ -74,32 +74,49 @@ export default function TablesPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
               {tables.filter(t => t.section === section).map(table => {
                 
-                const isFree = table.status === 'free';
-                const isOccupied = table.status === 'occupied';
-                const isReserved = table.status === 'reserved';
+                const isFree = table.status === 'FREE';
+                const isOccupied = table.status === 'OCCUPIED';
+                const isReserved = table.status === 'RESERVED';
 
-                let bgClass = "bg-white border-gray-200 outline outline-2 outline-transparent";
-                if(isFree) bgClass = "bg-[#ECFDF5] border-[#10B981]/20 outline-[#10B981]";
-                if(isOccupied) bgClass = "bg-[#FEF2F2] border-[#EF4444]/20 outline-[#EF4444]";
-                if(isReserved) bgClass = "bg-[#EFF6FF] border-[#3B82F6]/20 outline-[#3B82F6]";
+                let bgClass = "bg-white/40 border-slate-200";
+                let accentColor = "bg-slate-400";
+                
+                if(isFree) {
+                  bgClass = "bg-emerald-50/50 border-emerald-100/50 hover:bg-emerald-50 hover:border-emerald-200";
+                  accentColor = "bg-emerald-500";
+                }
+                if(isOccupied) {
+                  bgClass = "bg-rose-50/50 border-rose-100/50 hover:bg-rose-50 hover:border-rose-200 text-rose-900";
+                  accentColor = "bg-rose-500";
+                }
+                if(isReserved) {
+                  bgClass = "bg-blue-50/50 border-blue-100/50 hover:bg-blue-50 hover:border-blue-200 text-blue-900";
+                  accentColor = "bg-blue-500";
+                }
 
                 return (
                   <div 
                     key={table.id} 
-                    className={`${bgClass} rounded-2xl p-5 border shadow-sm relative transition-all duration-300 hover:shadow-md flex flex-col items-center justify-center min-h-[140px] gap-2`}
+                    className={`${bgClass} rounded-[2rem] p-8 border-2 shadow-sm relative transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col items-center justify-center min-h-[160px] gap-3 group group-hover:bg-white`}
                   >
-                    <span className="text-3xl font-black text-gray-900">
-                      T{table.tableNumber}
+                    <div className={`absolute top-4 right-4 w-2 h-2 rounded-full ${accentColor} shadow-[0_0_8px] group-hover:scale-125 transition-transform`}></div>
+                    
+                    <span className="text-4xl font-black text-gray-900 tracking-tighter">
+                      {table.tableNumber}
                     </span>
                     
-                    <div className="flex items-center gap-1.5 text-sm text-gray-600 bg-white/60 px-2 py-1 rounded-lg backdrop-blur-sm">
-                      <Users size={14} />
-                      <span className="font-semibold">{table.capacity}</span>
+                    <div className="flex items-center gap-2 text-xs font-bold text-gray-500 bg-white/80 px-4 py-2 rounded-xl backdrop-blur-sm shadow-sm border border-gray-100">
+                      <Users size={14} className="text-[#FF6B35]" />
+                      <span>{table.capacity} COVERS</span>
                     </div>
 
                     {isOccupied && (
-                       <button onClick={() => handleFreeTable(table.id)} className="absolute -top-2 -right-2 bg-white text-gray-500 hover:text-red-600 shadow-md rounded-full p-1 border">
-                         <RefreshCcw size={14} />
+                       <button 
+                         onClick={() => handleFreeTable(table.id)} 
+                         className="absolute -bottom-2 bg-white text-slate-400 hover:text-red-500 shadow-lg shadow-slate-200 rounded-full p-2 border border-slate-100 transition-all hover:rotate-180"
+                         title="Manual Reset"
+                       >
+                         <RefreshCcw size={16} />
                        </button>
                     )}
                   </div>

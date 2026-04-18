@@ -88,52 +88,58 @@ export default function QueuePage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 flex-1 overflow-y-auto content-start pb-20">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 flex-1 overflow-y-auto content-start pb-20 px-1">
         {queues.length === 0 ? (
-          <div className="col-span-full py-20 text-center text-gray-500 bg-white rounded-2xl border border-dashed border-gray-300">
-            <Users className="mx-auto h-12 w-12 text-gray-300 mb-3" />
-            <p className="text-lg font-medium text-gray-900">Queue is empty</p>
-            <p>No one is waiting right now.</p>
+          <div className="col-span-full py-24 text-center text-gray-400 bg-gray-50/50 rounded-[2.5rem] border-2 border-dashed border-gray-200">
+            <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm">
+              <Users className="h-10 w-10 text-gray-300" />
+            </div>
+            <p className="text-xl font-bold text-gray-900">Waitlist is clear</p>
+            <p className="mt-2 text-gray-500">Add parties to see them appear here in real-time.</p>
           </div>
         ) : queues.map((q) => (
-          <div key={q.id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden transition-all hover:shadow-md">
-            <div className="absolute top-0 left-0 w-1 h-full bg-[#FF6B35]" />
-            <div className="flex justify-between items-start mb-4">
+          <div key={q.id} className="group bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+            <div className="absolute top-0 left-0 w-2 h-full bg-[#FF6B35] group-hover:w-3 transition-all" />
+            <div className="flex justify-between items-start mb-6">
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1 block">Queue #{q.queueNumber}</span>
-                <h3 className="text-xl font-bold text-gray-900">{q.customerName}</h3>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#FF6B35] mb-2 block">ENTRY #{q.queueNumber}</span>
+                <h3 className="text-2xl font-black text-gray-900 tracking-tight leading-tight">{q.customerName}</h3>
               </div>
-              <span className={`px-3 py-1 rounded-full text-xs font-semibold badge-${q.status}`}>
-                {q.status.toUpperCase()}
-              </span>
+              <div className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase border ${
+                q.status === 'READY' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'
+              }`}>
+                {q.status}
+              </div>
             </div>
             
-            <div className="flex items-center gap-4 text-gray-600 mb-6 bg-gray-50 p-3 rounded-xl">
-              <div className="flex items-center gap-2">
-                <Users size={18} className="text-[#FF6B35]" />
-                <span className="font-semibold">{q.partySize} pax</span>
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              <div className="flex flex-col gap-1.5 p-4 bg-gray-50 rounded-2xl border border-gray-100 group-hover:bg-orange-50/50 group-hover:border-orange-100 transition-colors">
+                <Users size={20} className="text-[#FF6B35]" />
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Party Size</span>
+                <span className="text-lg font-black text-gray-900">{q.peopleCount} People</span>
               </div>
-              <div className="w-px h-4 bg-gray-300"></div>
-              <div className="flex items-center gap-2">
-                <Clock size={18} className="text-[#FF6B35]" />
-                <span className="font-semibold">~{q.estimatedWait}m</span>
+              <div className="flex flex-col gap-1.5 p-4 bg-gray-50 rounded-2xl border border-gray-100 group-hover:bg-orange-50/50 group-hover:border-orange-100 transition-colors">
+                <Clock size={20} className="text-[#FF6B35]" />
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Est. Wait</span>
+                <span className="text-lg font-black text-gray-900">{q.estimatedWait} Mins</span>
               </div>
             </div>
 
             <div className="mt-auto flex gap-3">
-              {q.status === 'waiting' && (
+              {q.status === 'WAITING' && (
                 <>
-                  <button onClick={() => handleStatusChange(q.id, 'ready')} className="flex-1 bg-green-50 hover:bg-green-100 text-green-700 py-2.5 rounded-xl font-medium transition-colors">
-                    Mark Ready
+                  <button onClick={() => handleStatusChange(q.id, 'READY')} className="flex-1 bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white py-4 rounded-2xl font-bold text-sm transition-all duration-300">
+                    Ready
                   </button>
-                  <button onClick={() => handleAutoAssign(q.id)} className="flex-1 bg-[#1F2937] hover:bg-black text-white py-2.5 rounded-xl font-medium transition-colors">
-                    Auto-Assign
+                  <button onClick={() => handleAutoAssign(q.id)} className="flex-1 bg-[#0F172A] hover:bg-black text-white py-4 rounded-2xl font-bold text-sm transition-all duration-300 shadow-lg shadow-slate-900/10">
+                    Assign
                   </button>
                 </>
               )}
-               {q.status === 'ready' && (
-                 <button onClick={() => handleAutoAssign(q.id)} className="w-full bg-[#1F2937] hover:bg-black text-white py-2.5 rounded-xl font-medium transition-colors flex justify-center items-center gap-2">
+               {q.status === 'READY' && (
+                 <button onClick={() => handleAutoAssign(q.id)} className="w-full bg-[#0F172A] hover:bg-black text-white py-4 rounded-2xl font-bold text-sm transition-all duration-300 flex justify-center items-center gap-2 shadow-lg shadow-slate-900/10">
                     <MapPin size={18} />
-                    Assign Table Now
+                    Auto-Assign Table
                  </button>
                )}
             </div>
