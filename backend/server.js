@@ -15,30 +15,36 @@ const frontendUrl = process.env.FRONTEND_URL
   ? process.env.FRONTEND_URL.replace(/\/$/, '') 
   : 'http://localhost:3000';
 
-// Allowed origins
-const allowedOrigins = [
-  frontendUrl,
-  `${frontendUrl}/`,
-  'https://resto-glam-final.vercel.app',
-  'https://resto-glam-final.vercel.app/',
-];
+// Allowed origins function
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    
+    const isAllowed = [
+      frontendUrl,
+      'https://resto-glam-final.vercel.app',
+      'https://resto-glam-final-shahinshacs-projects.vercel.app'
+    ].some(allowed => origin.startsWith(allowed));
+
+    if (isAllowed || origin.includes('vercel.app')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+};
 
 // Socket.io setup
 const io = new Server(httpServer, {
-  cors: {
-    origin: allowedOrigins,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-    credentials: true,
-  }
+  cors: corsOptions
 });
 
 // Middleware
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(morgan('dev'));
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true,
-}));
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Make io accessible in routes
