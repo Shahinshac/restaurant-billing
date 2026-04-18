@@ -10,10 +10,15 @@ const prisma = require('./db');
 const app = express();
 const httpServer = http.createServer(app);
 
+// Clean frontend URL (remove trailing slash) to prevent CORS mismatches
+const frontendUrl = process.env.FRONTEND_URL 
+  ? process.env.FRONTEND_URL.replace(/\/$/, '') 
+  : 'http://localhost:3000';
+
 // Socket.io setup
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: [frontendUrl, `${frontendUrl}/`],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     credentials: true,
   }
@@ -23,7 +28,7 @@ const io = new Server(httpServer, {
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(morgan('dev'));
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: [frontendUrl, `${frontendUrl}/`],
   credentials: true,
 }));
 app.use(express.json());
