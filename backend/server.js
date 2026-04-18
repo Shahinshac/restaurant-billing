@@ -15,10 +15,18 @@ const frontendUrl = process.env.FRONTEND_URL
   ? process.env.FRONTEND_URL.replace(/\/$/, '') 
   : 'http://localhost:3000';
 
+// Allowed origins
+const allowedOrigins = [
+  frontendUrl,
+  `${frontendUrl}/`,
+  'https://resto-glam-final.vercel.app',
+  'https://resto-glam-final.vercel.app/',
+];
+
 // Socket.io setup
 const io = new Server(httpServer, {
   cors: {
-    origin: [frontendUrl, `${frontendUrl}/`],
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     credentials: true,
   }
@@ -28,7 +36,7 @@ const io = new Server(httpServer, {
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(morgan('dev'));
 app.use(cors({
-  origin: [frontendUrl, `${frontendUrl}/`],
+  origin: allowedOrigins,
   credentials: true,
 }));
 app.use(express.json());
