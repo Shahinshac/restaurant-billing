@@ -1,0 +1,109 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id    String @id @default(uuid())
+  name  String
+  role  String @default("staff") // admin, staff
+}
+
+model Table {
+  id          String   @id @default(uuid())
+  tableNumber Int      @unique
+  capacity    Int
+  status      String   @default("FREE") // FREE, OCCUPIED, RESERVED
+  section     String   @default("Main Hall")
+
+  currentOrderId String? @unique
+  currentOrder   Order?  @relation("CurrentOrder", fields: [currentOrderId], references: [id])
+
+  occupiedAt  DateTime?
+  reservedFor String    @default("")
+  posX        Int       @default(0)
+  posY        Int       @default(0)
+
+  orders Order[] @relation("TableAllOrders")
+  queues Queue[]
+}
+
+model Queue {
+  id              String   @id @default(uuid())
+  customerName    String
+  peopleCount     Int
+  status          String   @default("WAITING") // WAITING, READY, ASSIGNED
+  qrCode          String   @default("")
+  queueNumber     Int      @default(autoincrement())
+  estimatedWait   Int      @default(0)
+  
+  assignedTableId String?
+  table           Table?   @relation(fields: [assignedTableId], references: [id], onDelete: SetNull)
+  
+  notes           String   @default("")
+  createdAt       DateTime @default(now())
+}
+
+model MenuItem {
+  id          String   @id @default(uuid())
+  name        String
+  category    String
+  price       Float
+  description String   @default("")
+  isVeg       Boolean  @default(true)
+  isAvailable Boolean  @default(true)
+  prepTime    Int      @default(10)
+  image       String   @default("")
+  
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id            String   @id @default(uuid())
+  orderNumber   String   @unique
+  
+  tableId       String
+  table         Table    @relation("TableAllOrders", fields: [tableId], references: [id])
+  
+  tableNumber   Int
+  
+  items         OrderItem[]
+  
+  status        String   @default("PENDING") // PENDING, PREPARING, READY, COMPLETED
+  
+  subtotal      Float    @default(0)
+  gstRate       Float    @default(5)
+  gstAmount     Float    @default(0)
+  totalAmount   Float    @default(0)
+  
+  paymentMethod String   @default("pending")
+  paymentStatus String   @default("unpaid")
+  splitPayments Json     @default("[]")
+  
+  notes         String   @default("")
+  servedBy      String   @default("Staff")
+
+  currentForTable Table? @relation("CurrentOrder")
+
+  createdAt     DateTime @default(now())
+}
+
+model OrderItem {
+  id         String    @id @default(uuid())
+  orderId    String
+  order      Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  menuItemId String?
+  menuItem   MenuItem? @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+  
+  itemName   String
+  category   String    @default("")
+  price      Float
+  quantity   Int
+  notes      String    @default("")
+  status     String    @default("PENDING") // PENDING, PREPARING, READY, COMPLETED
+}
