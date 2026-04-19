@@ -34,6 +34,7 @@ export default function POSTerminal() {
   const [customerDetails, setCustomerDetails] = useState({ name: '', phone: '' });
   const [heldOrder, setHeldOrder] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPaid, setIsPaid] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('pos_held_order');
@@ -127,6 +128,8 @@ export default function POSTerminal() {
         orderType: isTakeaway ? 'TAKEAWAY' : 'DINE_IN',
         customerName: customerDetails.name,
         customerPhone: customerDetails.phone,
+        paymentStatus: isPaid ? 'paid' : 'unpaid',
+        paymentMethod: isPaid ? 'cash' : 'pending',
         items: cart.map(i => ({
           menuItemId: i.id,
           name: i.name,
@@ -150,6 +153,7 @@ export default function POSTerminal() {
       setCart([]);
       setSelectedTableId(null);
       setCustomerDetails({ name: '', phone: '' });
+      setIsPaid(false);
       fetchInitialData();
     } catch (error) {
       toast.error("Failed to place order");
@@ -469,6 +473,18 @@ export default function POSTerminal() {
           </div>
 
           <div className="p-6 space-y-4" style={{ background: 'var(--bg-elevated)', borderTop: '1px solid var(--border)' }}>
+            
+            <div className="flex items-center justify-between pb-4" style={{ borderBottom: '1px dashed var(--border)' }}>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: 'var(--text-dim)' }}>Payment Status</p>
+              <button 
+                onClick={() => setIsPaid(!isPaid)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isPaid ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'bg-gray-500/5 text-gray-500 border border-white/5'}`}
+              >
+                {isPaid ? <CheckCircle2 size={14} /> : <Clock size={14} />}
+                {isPaid ? 'Paid Upfront' : 'Pay After Food'}
+              </button>
+            </div>
+
             <div className="space-y-2">
               <div className="flex justify-between text-[11px] font-medium" style={{ color: 'var(--text-tertiary)' }}>
                 <span>Subtotal</span>

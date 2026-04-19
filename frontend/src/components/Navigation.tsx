@@ -43,13 +43,13 @@ export function Navigation() {
     { href: "/tables", label: "Tables", icon: Grid },
     { href: "/kds", label: "Kitchen", icon: ChefHat },
     { href: "/status", label: "Status Board", icon: Monitor },
+    { href: "/invoices", label: "Invoices", icon: FileText },
   ];
 
   const adminLinks = [
     { href: "/admin/menu", label: "Menu Manager", icon: Flame },
     { href: "/admin/tables", label: "Floor Layout", icon: Map },
     { href: "/admin/qr", label: "QR Manager", icon: QrCode },
-    { href: "/invoices", label: "Invoices", icon: FileText },
   ];
 
   return (

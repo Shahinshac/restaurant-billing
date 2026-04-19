@@ -42,6 +42,17 @@ export default function TablesPage() {
     fetchTables();
   };
 
+  const handleFreeTable = async (id: string, tableNumber: number) => {
+    if (!window.confirm(`Are you sure you want to manually free Table ${tableNumber}?`)) return;
+    try {
+      await api.post(`/tables/${id}/free`);
+      toast.success(`Table ${tableNumber} is now available`);
+      fetchTables();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to free table");
+    }
+  };
+
   if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-screen" style={{ background: 'var(--bg-deep)' }}>
       <div className="w-12 h-12 border-[3px] rounded-full animate-spin mb-5"
@@ -167,12 +178,14 @@ export default function TablesPage() {
                         </div>
 
                         {isOccupied ? (
-                          <div className="mt-5 flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.3em] px-3 py-1.5 rounded-lg"
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleFreeTable(table.id, table.tableNumber); }}
+                            className="mt-5 flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-xl transition-all hover:scale-110 active:scale-95 group-hover:bg-red-500 group-hover:text-white"
                             style={{ background: 'var(--danger-soft)', color: 'var(--danger)', border: '1px solid rgba(239,68,68,0.2)' }}
                           >
                             <Clock size={10} strokeWidth={3} />
-                            Occupied
-                          </div>
+                            Free Table
+                          </button>
                         ) : (
                           <div className="mt-5 flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.3em] px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all transform translate-y-1 group-hover:translate-y-0"
                             style={{ background: 'var(--success-soft)', color: 'var(--success)', border: '1px solid rgba(34,197,94,0.2)' }}

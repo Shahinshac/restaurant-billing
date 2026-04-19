@@ -101,6 +101,8 @@ router.post('/', async (req, res) => {
            customerName: customerName || '',
            customerPhone: customerPhone || '',
            customerEmail: customerEmail || '',
+           paymentStatus: req.body.paymentStatus || 'unpaid',
+           paymentMethod: req.body.paymentMethod || 'pending',
            tableId: tableId || null,
            tableNumber: tableObj ? tableObj.tableNumber : null,
            subtotal,
