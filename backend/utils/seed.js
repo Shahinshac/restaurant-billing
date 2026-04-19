@@ -53,7 +53,7 @@ const TABLES = [
 const seedDatabase = async () => {
   try {
     console.log('🧹 Clearing existing data...');
-    // IMPORTANT: Clear currentOrderId in Tables first if they exist to avoid FK constraints
+    await prisma.booking.deleteMany();
     await prisma.table.updateMany({ data: { currentOrderId: null } });
     await prisma.orderItem.deleteMany();
     await prisma.order.deleteMany();
@@ -70,10 +70,10 @@ const seedDatabase = async () => {
     const tables = await prisma.table.findMany();
 
     console.log('📝 Seeding Historical Orders...');
-    // Create some historical completed orders for the dashboard
-    const historicalOrders = [];
-    for (let i = 0; i < 15; i++) {
-      const table = tables[Math.floor(Math.random() * tables.length)];
+    // Create some historical completed orders
+    for (let i = 0; i < 20; i++) {
+      const isTakeaway = i % 4 === 0;
+      const table = isTakeaway ? null : tables[Math.floor(Math.random() * tables.length)];
       const itemCount = Math.floor(Math.random() * 3) + 2;
       const orderItemsData = [];
       let subtotal = 0;
@@ -97,22 +97,47 @@ const seedDatabase = async () => {
 
       await prisma.order.create({
         data: {
-          orderNumber: `ORD-${1000 + i}`,
-          tableId: table.id,
-          tableNumber: table.tableNumber,
+          orderNumber: `ORD-${2000 + i}`,
+          orderType: isTakeaway ? 'TAKEAWAY' : 'DINE_IN',
+          customerName: isTakeaway ? 'Walking Guest' : '',
+          tableId: table?.id || null,
+          tableNumber: table?.tableNumber || null,
           status: 'COMPLETED',
           subtotal: subtotal,
           gstAmount: gst,
           totalAmount: total,
           paymentMethod: i % 2 === 0 ? 'cash' : 'upi',
           paymentStatus: 'paid',
-          createdAt: new Date(Date.now() - Math.floor(Math.random() * 86400000)), // within last 24h
+          createdAt: new Date(Date.now() - Math.floor(Math.random() * 86400000)),
           items: {
             create: orderItemsData
           }
         }
       });
     }
+
+    console.log('📅 Seeding Table Bookings...');
+    const bookingData = [
+      {
+        customerName: 'Vikram Singh',
+        customerPhone: '9876543210',
+        customerEmail: 'vikram@example.com',
+        partySize: 6,
+        bookingDate: new Date(Date.now() + 86400000), // Tomorrow
+        specialRequests: 'Birthday dinner - Need a cake and quiet corner.',
+        status: 'CONFIRMED'
+      },
+      {
+        customerName: 'Anjali Sharma',
+        customerPhone: '9988776655',
+        customerEmail: 'anjali@example.com',
+        partySize: 2,
+        bookingDate: new Date(Date.now() + 172800000), // Day after tomorrow
+        specialRequests: 'Window seat if possible, baby chair needed.',
+        status: 'CONFIRMED'
+      }
+    ];
+    await prisma.booking.createMany({ data: bookingData });
 
     console.log('👥 Seeding Customer Queue...');
     const queueData = [

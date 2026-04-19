@@ -29,8 +29,25 @@ model Table {
   posX        Int       @default(0)
   posY        Int       @default(0)
 
-  orders Order[] @relation("TableAllOrders")
-  queues Queue[]
+  orders   Order[]   @relation("TableAllOrders")
+  queues   Queue[]
+  bookings Booking[]
+}
+
+model Booking {
+  id              String   @id @default(uuid())
+  customerName    String
+  customerPhone   String
+  customerEmail   String?
+  partySize       Int
+  bookingDate     DateTime
+  specialRequests String   @default("")
+  status          String   @default("CONFIRMED") // PENDING, CONFIRMED, ARRIVED, CANCELLED
+
+  tableId         String?
+  table           Table?   @relation(fields: [tableId], references: [id])
+  
+  createdAt       DateTime @default(now())
 }
 
 model Queue {
@@ -67,10 +84,15 @@ model Order {
   id            String   @id @default(uuid())
   orderNumber   String   @unique
   
-  tableId       String
-  table         Table    @relation("TableAllOrders", fields: [tableId], references: [id])
+  orderType     String   @default("DINE_IN") // DINE_IN, TAKEAWAY
+  customerName  String   @default("")
+  customerPhone String   @default("")
+  customerEmail String   @default("")
+
+  tableId       String?
+  table         Table?    @relation("TableAllOrders", fields: [tableId], references: [id])
   
-  tableNumber   Int
+  tableNumber   Int?
   
   items         OrderItem[]
   

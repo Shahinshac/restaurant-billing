@@ -5,10 +5,11 @@ const prisma = require('../db');
 // Get all orders
 router.get('/', async (req, res) => {
   try {
-    const { status, tableId } = req.query;
+    const { status, tableId, type } = req.query;
     const filter = {};
     if (status) filter.status = status;
     if (tableId) filter.tableId = tableId;
+    if (type) filter.orderType = type;
 
     const orders = await prisma.order.findMany({
       where: filter,
@@ -36,6 +37,28 @@ router.get('/kds', async (req, res) => {
   }
 });
 
+// Get customers status orders (preparing/ready)
+router.get('/status-board', async (req, res) => {
+  try {
+    const orders = await prisma.order.findMany({
+      where: { 
+        status: { in: ['PREPARING', 'READY'] },
+        orderType: 'TAKEAWAY' // Usually for takeaway, but can be for both
+      },
+      select: {
+        id: true,
+        orderNumber: true,
+        status: true,
+        orderType: true
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+    res.json({ success: true, data: orders });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // Get single order
 router.get('/:id', async (req, res) => {
   try {
@@ -53,17 +76,19 @@ router.get('/:id', async (req, res) => {
 // Create order + items using transaction
 router.post('/', async (req, res) => {
   try {
-    const { tableId, items, notes } = req.body;
+    const { tableId, items, notes, orderType, customerName, customerPhone, customerEmail } = req.body;
     
     // Calculate total
     const subtotal = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
     const gstAmount = subtotal * 0.05;
     const totalAmount = subtotal + gstAmount;
 
-    // Run in transaction: create Order -> create OrderItems -> update Table status
+    // Run in transaction
     const result = await prisma.$transaction(async (tx) => {
-       const tableObj = await tx.table.findUnique({ where: { id: tableId }});
-       if (!tableObj) throw new Error("Table not found");
+       let tableObj = null;
+       if (tableId) {
+         tableObj = await tx.table.findUnique({ where: { id: tableId }});
+       }
 
        // Auto-generate order Number
        const count = await tx.order.count();
@@ -72,8 +97,12 @@ router.post('/', async (req, res) => {
        const order = await tx.order.create({
          data: {
            orderNumber,
-           tableId,
-           tableNumber: tableObj.tableNumber,
+           orderType: orderType || 'DINE_IN',
+           customerName: customerName || '',
+           customerPhone: customerPhone || '',
+           customerEmail: customerEmail || '',
+           tableId: tableId || null,
+           tableNumber: tableObj ? tableObj.tableNumber : null,
            subtotal,
            gstAmount,
            totalAmount,
@@ -91,14 +120,17 @@ router.post('/', async (req, res) => {
          include: { items: true, table: true }
        });
 
-       const updateTable = await tx.table.update({
-         where: { id: tableId },
-         data: {
-           status: 'OCCUPIED',
-           currentOrderId: order.id,
-           occupiedAt: tableObj.occupiedAt || new Date()
-         }
-       });
+       let updateTable = null;
+       if (tableId && orderType !== 'TAKEAWAY') {
+         updateTable = await tx.table.update({
+           where: { id: tableId },
+           data: {
+             status: 'OCCUPIED',
+             currentOrderId: order.id,
+             occupiedAt: new Date()
+           }
+         });
+       }
 
        return { order, updateTable };
     });
@@ -106,7 +138,9 @@ router.post('/', async (req, res) => {
     const io = req.app.get('io');
     io.emit('order_created', { order: result.order });
     io.emit('kds_update', { action: 'new_order', order: result.order });
-    io.emit('table_updated', { action: 'order_added', table: result.updateTable });
+    if (result.updateTable) {
+      io.emit('table_updated', { action: 'order_added', table: result.updateTable });
+    }
 
     res.status(201).json({ success: true, data: result.order });
   } catch (err) {
@@ -192,14 +226,13 @@ router.patch('/:orderId/items/:itemId/status', async (req, res) => {
         
         let order = await tx.order.findUnique({ where: { id: req.params.orderId }, include: { items: true, table: true } });
         
-        if (allReady && order.status === 'PREPARING') {
+        if (allReady && (order.status === 'PREPARING' || order.status === 'PENDING')) {
            order = await tx.order.update({
               where: { id: req.params.orderId },
               data: { status: 'READY' },
               include: { items: true, table: true }
            });
         } else {
-           // just manually attach updated items to order object since we didn't update parent
            order.items = allItems.map(i => i.id === item.id ? item : i);
         }
         return order;

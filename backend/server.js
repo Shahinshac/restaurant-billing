@@ -51,16 +51,18 @@ app.use(express.json());
 app.set('io', io);
 
 // Routes
-const queueRoutes = require('./routes/queue');
-const tableRoutes = require('./routes/tables');
-const orderRoutes = require('./routes/orders');
-const menuRoutes = require('./routes/menu');
+const menuRouter = require('./routes/menu');
+const orderRouter = require('./routes/orders');
+const tableRouter = require('./routes/tables');
+const queueRouter = require('./routes/queue');
+const bookingRouter = require('./routes/bookings');
 const analyticsRoutes = require('./routes/analytics');
 
-app.use('/api/queue', queueRoutes);
-app.use('/api/tables', tableRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/menu', menuRoutes);
+app.use('/api/menu', menuRouter);
+app.use('/api/orders', orderRouter);
+app.use('/api/tables', tableRouter);
+app.use('/api/queue', queueRouter);
+app.use('/api/bookings', bookingRouter);
 app.use('/api/analytics', analyticsRoutes);
 
 // Health check
