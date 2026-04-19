@@ -144,7 +144,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center mt-6 text-sm" style={{ color: 'var(--text-dim)' }}>
-          Need help? <span className="font-semibold cursor-pointer" style={{ color: 'var(--accent)' }}>Contact Support</span>
+          Need help? <a href="mailto:shahinsha.c123@gmail.com" className="font-semibold transition-colors hover:opacity-80" style={{ color: 'var(--accent)' }}>Contact Support</a>
         </p>
       </div>
     </div>
