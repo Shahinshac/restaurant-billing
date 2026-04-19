@@ -438,3 +438,42 @@
   background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
   background-size: 24px 24px;
 }
+/* ═══════════════════════════════
+   PRINT STYLES (Thermal Receipt)
+   ═══════════════════════════════ */
+@media print {
+  /* Hide everything by default */
+  body * {
+    visibility: hidden;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Show only elements with .print-only class */
+  .print-only, .print-only * {
+    visibility: visible;
+  }
+
+  /* Position receipt at exactly the top left */
+  .print-only {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 80mm !important; /* Standard Thermal Width */
+    margin: 0 !important;
+    padding: 4mm !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Remove default browser headers/footers */
+  @page {
+    margin: 0;
+    size: auto;
+  }
+
+  /* Hide print-hidden items specifically */
+  .print-hidden {
+    display: none !important;
+  }
+}

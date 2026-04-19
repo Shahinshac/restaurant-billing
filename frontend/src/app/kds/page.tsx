@@ -231,18 +231,17 @@ export default function KDSPage() {
                   })}
                 </div>
 
-                {/* Action Footer */}
                 <div className="p-6 pt-0 mt-auto">
                   <div className="w-full text-center py-4 font-bold uppercase tracking-widest rounded-xl flex items-center justify-center gap-2"
                     style={{
                       background: 'var(--bg-elevated)',
-                      color: isNew ? 'var(--info)' : 'var(--accent)',
-                      border: isNew ? '1px solid rgba(59,130,246,0.2)' : '1px solid var(--accent-border)',
+                      color: isNew ? 'var(--info)' : (order.status === 'READY' ? 'var(--success)' : 'var(--accent)'),
+                      border: isNew ? '1px solid rgba(59,130,246,0.2)' : (order.status === 'READY' ? '1px solid var(--success-glow)' : '1px solid var(--accent-border)'),
                       fontSize: '9px',
                     }}
                   >
-                    <div className={`w-1.5 h-1.5 rounded-full ${isNew ? 'bg-blue-500' : 'bg-orange-500'} animate-pulse`}></div>
-                    {isNew ? 'New Order • Kitchen' : 'Cooking in Progress'}
+                    <div className={`w-1.5 h-1.5 rounded-full ${isNew ? 'bg-blue-500' : (order.status === 'READY' ? 'bg-emerald-500' : 'bg-orange-500')} animate-pulse`}></div>
+                    {isNew ? 'New Order • Kitchen' : (order.status === 'READY' ? 'Order Ready' : 'Cooking in Progress')}
                   </div>
                 </div>
               </div>

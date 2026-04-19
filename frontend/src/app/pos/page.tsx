@@ -32,6 +32,31 @@ export default function POSTerminal() {
   const [isTakeaway, setIsTakeaway] = useState(false);
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [customerDetails, setCustomerDetails] = useState({ name: '', phone: '' });
+  const [heldOrder, setHeldOrder] = useState<any>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('pos_held_order');
+    if (saved) setHeldOrder(JSON.parse(saved));
+  }, []);
+
+  const saveHold = () => {
+    if (cart.length === 0) return;
+    const holdData = { cart, isTakeaway, selectedTableId, customerDetails };
+    localStorage.setItem('pos_held_order', JSON.stringify(holdData));
+    setHeldOrder(holdData);
+    setCart([]);
+    toast.success("Order Held");
+  };
+
+  const recallHold = () => {
+    if (!heldOrder) return;
+    setCart(heldOrder.cart);
+    setIsTakeaway(heldOrder.isTakeaway);
+    setSelectedTableId(heldOrder.selectedTableId);
+    setCustomerDetails(heldOrder.customerDetails);
+    setHeldOrder(null);
+    localStorage.removeItem('pos_held_order');
+  };
 
   useEffect(() => {
     fetchInitialData();
@@ -140,7 +165,7 @@ export default function POSTerminal() {
   return (
     <div className="flex h-screen overflow-hidden animate-in" style={{ background: 'var(--bg-deep)' }}>
       {/* ═══════ Printable Receipt (Hidden) ═══════ */}
-      <div className="hidden print:block print:w-[80mm] print:p-4 text-black bg-white font-mono text-[12px] leading-tight">
+      <div className="hidden print:block print-only print:w-[80mm] print:p-4 text-black bg-white font-mono text-[12px] leading-tight">
         <div className="text-center mb-4">
           <h1 className="text-lg font-bold uppercase tracking-tighter">Saanam</h1>
           <p className="text-[10px]">Restaurant Management Suite</p>
@@ -465,11 +490,16 @@ export default function POSTerminal() {
               </button>
               <button 
                 className="px-6 py-4 rounded-xl flex items-center justify-center gap-2 font-bold text-[11px] uppercase tracking-widest transition-all"
-                style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', color: 'var(--text-dim)' }}
-                onClick={() => setCart([])}
+                style={{ 
+                  background: heldOrder ? 'var(--accent-soft)' : 'var(--bg-surface)', 
+                  border: heldOrder ? '1px solid var(--accent-border)' : '1px solid var(--border)', 
+                  color: heldOrder ? 'var(--accent)' : 'var(--text-dim)' 
+                }}
+                onClick={heldOrder ? recallHold : saveHold}
+                disabled={!heldOrder && cart.length === 0}
               >
-                <X size={16} />
-                Hold
+                {heldOrder ? <ArrowRight size={16} /> : <Clock size={16} />}
+                {heldOrder ? 'Recall' : 'Hold'}
               </button>
               <button 
                 onClick={handlePlaceOrder}

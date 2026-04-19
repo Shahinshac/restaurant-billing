@@ -4,7 +4,7 @@ import { useEffect, useState, use } from "react";
 import api from "@/lib/api";
 import { socket } from "@/lib/socket";
 import toast from "react-hot-toast";
-import { ShoppingBag, Star, ChevronRight, Plus, Flame, Clock, CheckCircle2 } from "lucide-react";
+import { ShoppingBag, Star, ChevronRight, Plus, Minus, Flame, Clock, CheckCircle2 } from "lucide-react";
 
 export default function DigitalMenu({ params }: { params: Promise<{ tableId: string }> }) {
   const unwrappedParams = use(params);
@@ -59,6 +59,16 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
       return [...prev, { menuItem: item.id, name: item.name, price: item.price, quantity: 1, isVeg: item.isVeg }];
     });
     toast.success(`${item.name} added`, { position: 'bottom-center', duration: 1000 });
+  };
+
+  const removeFromCart = (itemId: string) => {
+    setCart(prev => {
+      const existing = prev.find(i => i.menuItem === itemId);
+      if (existing && existing.quantity > 1) {
+        return prev.map(i => i.menuItem === itemId ? { ...i, quantity: i.quantity - 1 } : i);
+      }
+      return prev.filter(i => i.menuItem !== itemId);
+    });
   };
 
   const placeOrder = async () => {
@@ -215,13 +225,35 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
               <p className="font-bold mt-3 text-sm" style={{ color: 'var(--text-primary)' }}>₹{item.price}</p>
             </div>
             <div className="flex items-end shrink-0">
-              <button 
-                onClick={() => addToCart(item)} 
-                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90"
-                style={{ background: 'var(--accent-soft)', color: 'var(--accent)', border: '1px solid var(--accent-border)' }}
-              >
-                <Plus size={16} strokeWidth={3} />
-              </button>
+              {cart.find(i => i.menuItem === item.id) ? (
+                <div className="flex items-center gap-2 bg-zinc-800/50 p-1.5 rounded-xl border border-white/5">
+                  <button 
+                    onClick={() => removeFromCart(item.id)} 
+                    className="w-8 h-8 rounded-lg flex items-center justify-center transition-all active:scale-90"
+                    style={{ background: 'var(--bg-elevated)', color: 'var(--text-primary)' }}
+                  >
+                    <Minus size={14} strokeWidth={3} />
+                  </button>
+                  <span className="w-6 text-center text-xs font-bold text-white">
+                    {cart.find(i => i.menuItem === item.id)?.quantity}
+                  </span>
+                  <button 
+                    onClick={() => addToCart(item)} 
+                    className="w-8 h-8 rounded-lg flex items-center justify-center transition-all active:scale-90"
+                    style={{ background: 'var(--accent)', color: '#fff' }}
+                  >
+                    <Plus size={14} strokeWidth={3} />
+                  </button>
+                </div>
+              ) : (
+                <button 
+                  onClick={() => addToCart(item)} 
+                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90"
+                  style={{ background: 'var(--accent-soft)', color: 'var(--accent)', border: '1px solid var(--accent-border)' }}
+                >
+                  <Plus size={16} strokeWidth={3} />
+                </button>
+              )}
             </div>
           </div>
         ))}
