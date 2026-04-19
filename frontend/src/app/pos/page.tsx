@@ -35,11 +35,38 @@ export default function POSTerminal() {
   const [heldOrder, setHeldOrder] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
+  const [portionSelectionItem, setPortionSelectionItem] = useState<any>(null);
+  const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem('pos_held_order');
     if (saved) setHeldOrder(JSON.parse(saved));
   }, []);
+
+  const handleTableSelect = (table: any) => {
+    if (selectedTableId === table.id) {
+       setSelectedTableId(null);
+       setCart([]);
+       setActiveOrderId(null);
+       return;
+    }
+    
+    setSelectedTableId(table.id);
+    if (table.status === 'OCCUPIED' && table.currentOrder) {
+       setActiveOrderId(table.currentOrderId);
+       setCart(table.currentOrder.items.map((i: any) => ({
+         id: i.menuItemId || i.id,
+         name: i.itemName,
+         price: i.price,
+         quantity: i.quantity,
+         isExisting: true
+       })));
+       toast.success(`Active bill loaded for Table ${table.tableNumber}`);
+    } else {
+       setActiveOrderId(null);
+       setCart([]);
+    }
+  };
 
   const saveHold = () => {
     if (cart.length === 0) return;
@@ -81,23 +108,40 @@ export default function POSTerminal() {
     }
   };
 
-  const addToCart = (item: any) => {
+  const addToCart = (item: any, selectedPortion: string = 'FULL') => {
+    const itemName = selectedPortion === 'FULL' ? item.name : `${item.name} (${selectedPortion})`;
+    const priceRatio = selectedPortion === '1/4' ? 0.25 : selectedPortion === '1/2' ? 0.5 : selectedPortion === '3/4' ? 0.75 : 1;
+    const finalPrice = Math.round(item.price * priceRatio);
+
     setCart(prev => {
-      const existing = prev.find(i => i.id === item.id);
+      // Find matches that are NOT existing items (already sent to kitchen)
+      const existing = prev.find(i => i.name === itemName && !i.isExisting);
       if (existing) {
-        return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
+        return prev.map(i => (i.name === itemName && !i.isExisting) ? { ...i, quantity: i.quantity + 1 } : i);
       }
-      return [...prev, { ...item, quantity: 1 }];
+      return [...prev, { 
+        id: item.id, 
+        name: itemName, 
+        price: finalPrice, 
+        quantity: 1, 
+        portion: selectedPortion,
+        isExisting: false 
+      }];
     });
+    setPortionSelectionItem(null);
   };
 
-  const removeFromCart = (itemId: string) => {
-    setCart(prev => prev.filter(i => i.id !== itemId));
+  const removeFromCart = (itemId: string, name?: string) => {
+    setCart(prev => prev.filter(i => {
+      if (name) return i.name !== name;
+      return i.id !== itemId;
+    }));
   };
 
-  const updateQuantity = (itemId: string, delta: number) => {
+  const updateQuantity = (itemId: string, delta: number, name?: string) => {
     setCart(prev => prev.map(i => {
-      if (i.id === itemId) {
+      const match = name ? i.name === name : i.id === itemId;
+      if (match) {
         const newQty = Math.max(1, i.quantity + delta);
         return { ...i, quantity: newQty };
       }
@@ -105,53 +149,71 @@ export default function POSTerminal() {
     }));
   };
 
-  const filteredMenu = activeCategory === "All" ? menu : menu.filter(m => m.category === activeCategory);
-  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const gst = subtotal * 0.05;
-  const total = subtotal + gst;
-
-  const handlePrint = () => {
-    if (cart.length === 0) return toast.error("Nothing to print");
-    window.print();
+  const handleSettleBill = async () => {
+    if (!activeOrderId) return;
+    if (!window.confirm("Are you sure you want to settle this bill and free the table?")) return;
+    
+    setIsSubmitting(true);
+    try {
+      await api.post(`/orders/${activeOrderId}/pay`, { 
+        paymentMethod: 'cash' 
+      });
+      toast.success("Table Settled Successfully");
+      setCart([]);
+      setSelectedTableId(null);
+      setActiveOrderId(null);
+      fetchInitialData();
+    } catch (error) {
+      toast.error("Failed to settle bill");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handlePlaceOrder = async () => {
     if (isSubmitting) return;
-    if (cart.length === 0) return toast.error("Cart is empty");
+    
+    // If adding items to active bill, only send the NEW ones
+    const newItems = cart.filter(i => !i.isExisting);
+    if (newItems.length === 0 && !activeOrderId) return toast.error("No new items to fire");
     if (!isTakeaway && !selectedTableId) return toast.error("Please select a table");
-    if (isTakeaway && !customerDetails.name) return toast.error("Guest name required for takeaway");
 
     setIsSubmitting(true);
     try {
-      const payload = {
-        tableId: isTakeaway ? null : selectedTableId,
-        orderType: isTakeaway ? 'TAKEAWAY' : 'DINE_IN',
-        customerName: customerDetails.name,
-        customerPhone: customerDetails.phone,
-        paymentStatus: isPaid ? 'paid' : 'unpaid',
-        paymentMethod: isPaid ? 'cash' : 'pending',
-        items: cart.map(i => ({
-          menuItemId: i.id,
-          name: i.name,
-          price: i.price,
-          quantity: i.quantity
-        }))
-      };
+      if (activeOrderId) {
+        // Mode: Add items to existing order
+        await api.post(`/orders/${activeOrderId}/add-items`, {
+          items: newItems.map(i => ({
+            menuItemId: i.id,
+            name: i.name,
+            price: i.price,
+            quantity: i.quantity
+          }))
+        });
+        toast.success("Additional items fired to kitchen!");
+      } else {
+        // Mode: New Order
+        const payload = {
+          tableId: isTakeaway ? null : selectedTableId,
+          orderType: isTakeaway ? 'TAKEAWAY' : 'DINE_IN',
+          customerName: customerDetails.name,
+          customerPhone: customerDetails.phone,
+          paymentStatus: isPaid ? 'paid' : 'unpaid',
+          paymentMethod: isPaid ? 'cash' : 'pending',
+          items: cart.map(i => ({
+            menuItemId: i.id,
+            name: i.name,
+            price: i.price,
+            quantity: i.quantity
+          }))
+        };
+        await api.post('/orders', payload);
+        toast.success("New order fired successfully!");
+      }
 
-      await api.post('/orders', payload);
-      toast.custom((t) => (
-        <div className="flex items-center gap-3 px-5 py-4 rounded-2xl animate-in"
-          style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}
-        >
-          <CheckCircle2 style={{ color: 'var(--success)' }} size={20} />
-          <div className="flex flex-col">
-            <span className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>Order Fired!</span>
-            <span className="text-[11px]" style={{ color: 'var(--text-dim)' }}>Sent to kitchen successfully</span>
-          </div>
-        </div>
-      ));
       setCart([]);
       setSelectedTableId(null);
+      setActiveOrderId(null);
       setCustomerDetails({ name: '', phone: '' });
       setIsPaid(false);
       fetchInitialData();
@@ -319,7 +381,13 @@ export default function POSTerminal() {
             {filteredMenu.map(item => (
               <div 
                 key={item.id} 
-                onClick={() => addToCart(item)}
+                onClick={() => {
+                  if (item.hasPortions) {
+                    setPortionSelectionItem(item);
+                  } else {
+                    addToCart(item);
+                  }
+                }}
                 className="glow-card group p-5 cursor-pointer flex flex-col"
               >
                 <div className="relative aspect-[4/3] mb-4 rounded-xl overflow-hidden flex items-center justify-center"
@@ -366,7 +434,7 @@ export default function POSTerminal() {
           <div className="p-6" style={{ borderBottom: '1px solid var(--border)' }}>
             <div className="flex justify-between items-center mb-1">
               <h2 className="text-lg font-bold tracking-tight flex items-center gap-2.5" style={{ color: 'var(--text-primary)' }}>
-                Active Order
+                {activeOrderId ? "Table Bill" : "Active Order"}
                 {cart.length > 0 && (
                   <span className="w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center"
                     style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}
@@ -415,7 +483,7 @@ export default function POSTerminal() {
                   return (
                     <button 
                       key={table.id}
-                      onClick={() => setSelectedTableId(table.id)}
+                      onClick={() => handleTableSelect(table)}
                       className="relative aspect-square rounded-xl flex flex-col items-center justify-center transition-all"
                       style={selectedTableId === table.id ? {
                         background: 'linear-gradient(135deg, var(--accent), #ea580c)',
@@ -450,22 +518,32 @@ export default function POSTerminal() {
                 <p className="text-[10px] font-bold uppercase tracking-[0.3em]" style={{ color: 'var(--text-dim)' }}>Cart is empty</p>
               </div>
             ) : (
-              cart.map(item => (
-                <div key={item.id} className="flex justify-between items-center group animate-in">
+              cart.map((item, idx) => (
+                <div key={`${item.id}-${idx}`} className="flex justify-between items-center group animate-in">
                   <div className="flex-1 pr-4 flex items-start gap-2.5">
-                    <div className="w-1.5 h-6 rounded-full mt-0.5" style={{ background: 'var(--accent)' }}></div>
+                    <div className="w-1.5 h-6 rounded-full mt-0.5" style={{ background: item.isExisting ? 'var(--text-dim)' : 'var(--accent)' }}></div>
                     <div>
-                      <p className="text-xs font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>{item.name}</p>
+                      <p className="text-xs font-bold leading-tight" style={{ color: item.isExisting ? 'var(--text-dim)' : 'var(--text-primary)' }}>
+                        {item.name}
+                        {item.isExisting && <span className="ml-2 text-[8px] opacity-60 uppercase tracking-widest">(SENT)</span>}
+                      </p>
                       <p className="text-[10px] font-bold mt-1" style={{ color: 'var(--text-dim)' }}>₹{item.price}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center bg-zinc-800/50 rounded-lg p-1 border border-white/5">
-                      <button onClick={() => updateQuantity(item.id, -1)} className="p-1 hover:text-white transition-colors"><Minus size={12} /></button>
-                      <span className="w-6 text-center text-xs font-bold">{item.quantity}</span>
-                      <button onClick={() => updateQuantity(item.id, 1)} className="p-1 hover:text-white transition-colors"><Plus size={12} /></button>
-                    </div>
-                    <button onClick={() => removeFromCart(item.id)} className="text-zinc-600 hover:text-red-500 transition-colors"><Trash2 size={14} /></button>
+                    {!item.isExisting && (
+                      <>
+                        <div className="flex items-center bg-zinc-800/50 rounded-lg p-1 border border-white/5">
+                          <button onClick={() => updateQuantity(item.id, -1, item.name)} className="p-1 hover:text-white transition-colors"><Minus size={12} /></button>
+                          <span className="w-6 text-center text-xs font-bold">{item.quantity}</span>
+                          <button onClick={() => updateQuantity(item.id, 1, item.name)} className="p-1 hover:text-white transition-colors"><Plus size={12} /></button>
+                        </div>
+                        <button onClick={() => removeFromCart(item.id, item.name)} className="text-zinc-600 hover:text-red-500 transition-colors"><Trash2 size={14} /></button>
+                      </>
+                    )}
+                    {item.isExisting && (
+                      <span className="text-[10px] font-black opacity-40">x{item.quantity}</span>
+                    )}
                   </div>
                 </div>
               ))
@@ -474,16 +552,28 @@ export default function POSTerminal() {
 
           <div className="p-6 space-y-4" style={{ background: 'var(--bg-elevated)', borderTop: '1px solid var(--border)' }}>
             
-            <div className="flex items-center justify-between pb-4" style={{ borderBottom: '1px dashed var(--border)' }}>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: 'var(--text-dim)' }}>Payment Status</p>
+            {activeOrderId ? (
               <button 
-                onClick={() => setIsPaid(!isPaid)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isPaid ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'bg-gray-500/5 text-gray-500 border border-white/5'}`}
+                onClick={handleSettleBill}
+                disabled={isSubmitting}
+                className="w-full btn-saanam flex items-center justify-center gap-2.5 py-4 mb-2"
+                style={{ background: 'var(--success)', border: 'none' }}
               >
-                {isPaid ? <CheckCircle2 size={14} /> : <Clock size={14} />}
-                {isPaid ? 'Paid Upfront' : 'Pay After Food'}
+                <CheckCircle2 size={18} />
+                Settle & Checkout Bill
               </button>
-            </div>
+            ) : (
+              <div className="flex items-center justify-between pb-4" style={{ borderBottom: '1px dashed var(--border)' }}>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: 'var(--text-dim)' }}>Payment Status</p>
+                <button 
+                  onClick={() => setIsPaid(!isPaid)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isPaid ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'bg-gray-500/5 text-gray-500 border border-white/5'}`}
+                >
+                  {isPaid ? <CheckCircle2 size={14} /> : <Clock size={14} />}
+                  {isPaid ? 'Paid Upfront' : 'Pay After Food'}
+                </button>
+              </div>
+            )}
 
             <div className="space-y-2">
               <div className="flex justify-between text-[11px] font-medium" style={{ color: 'var(--text-tertiary)' }}>
@@ -525,18 +615,52 @@ export default function POSTerminal() {
               </button>
               <button 
                 onClick={handlePlaceOrder}
-                disabled={cart.length === 0 || isSubmitting}
+                disabled={isSubmitting || (cart.filter(i => !i.isExisting).length === 0 && !activeOrderId)}
                 className="btn-saanam col-span-2 text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-2.5"
                 style={{ padding: '18px 28px' }}
               >
                 <Flame size={16} />
-                Fire Order
+                {activeOrderId ? 'Add to Order' : 'Fire Order'}
                 <ArrowRight size={14} />
               </button>
             </div>
           </div>
         </div>
       </div>
+      {/* Portion Selection Modal */}
+      {portionSelectionItem && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6"
+          style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)' }}
+        >
+          <div className="glass-card w-full max-w-sm p-8 animate-scale-in text-center relative">
+            <button 
+              onClick={() => setPortionSelectionItem(null)}
+              className="absolute top-6 right-6 text-zinc-500 hover:text-white"
+            >
+              <X size={20} />
+            </button>
+            <h2 className="text-xl font-black mb-1 capitalize">{portionSelectionItem.name}</h2>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-8 border-b border-white/5 pb-4">Select Portion Size</p>
+            
+            <div className="grid grid-cols-2 gap-4">
+              {['1/4', '1/2', '3/4', 'FULL'].map(p => {
+                const ratio = p === '1/4' ? 0.25 : p === '1/2' ? 0.5 : p === '3/4' ? 0.75 : 1;
+                const price = Math.round(portionSelectionItem.price * ratio);
+                return (
+                  <button 
+                    key={p}
+                    onClick={() => addToCart(portionSelectionItem, p)}
+                    className="p-6 rounded-2xl bg-zinc-900 border border-white/5 hover:border-orange-500/50 hover:bg-orange-500/5 transition-all text-center group"
+                  >
+                    <p className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-2 group-hover:text-orange-500">{p}</p>
+                    <p className="text-lg font-black tracking-tight">₹{price}</p>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -32,7 +32,8 @@ export default function MenuManager() {
     description: "",
     isVeg: true,
     isAvailable: true,
-    prepTime: 10
+    prepTime: 10,
+    hasPortions: false,
   });
 
   useEffect(() => {
@@ -64,7 +65,8 @@ export default function MenuManager() {
         description: item.description || "",
         isVeg: item.isVeg,
         isAvailable: item.isAvailable,
-        prepTime: item.prepTime || 10
+        prepTime: item.prepTime || 10,
+        hasPortions: item.hasPortions || false,
       });
     } else {
       setEditingItem(null);
@@ -75,7 +77,8 @@ export default function MenuManager() {
         description: "",
         isVeg: true,
         isAvailable: true,
-        prepTime: 10
+        prepTime: 10,
+        hasPortions: false,
       });
     }
     setShowModal(true);
@@ -222,12 +225,19 @@ export default function MenuManager() {
               <p className="text-xs font-medium line-clamp-2 leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>
                 {item.description || "No description provided."}
               </p>
+              {item.hasPortions && (
+                <div className="flex gap-1.5 mt-3">
+                  {['1/4', '1/2', '3/4'].map(p => (
+                    <span key={p} className="px-2 py-0.5 rounded-md bg-orange-500/10 text-orange-500 text-[8px] font-black tracking-widest uppercase">{p}</span>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="mt-6 pt-5 flex justify-between items-end" style={{ borderTop: '1px solid var(--border)' }}>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-dim)' }}>Price</p>
-                <p className="text-xl font-black" style={{ color: 'var(--text-primary)' }}>₹{item.price}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-dim)' }}>{item.hasPortions ? 'Starting at' : 'Price'}</p>
+                <p className="text-xl font-black" style={{ color: 'var(--text-primary)' }}>₹{item.hasPortions ? (item.price * 0.25).toFixed(0) : item.price}</p>
               </div>
               {!item.isAvailable && (
                 <div className="badge badge-danger text-[9px] mb-1">Sold Out</div>
@@ -270,7 +280,7 @@ export default function MenuManager() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-[0.2em] px-0.5" style={{ color: 'var(--text-dim)' }}>Price (₹)</label>
+                  <label className="text-[10px] font-bold uppercase tracking-[0.2em] px-0.5" style={{ color: 'var(--text-dim)' }}>Full Portion Price (₹)</label>
                   <input required type="number" className="input-saanam" placeholder="0" value={formData.price} onChange={e => setFormData({...formData, price: parseFloat(e.target.value)})} />
                 </div>
                 <div className="space-y-2">
@@ -282,6 +292,35 @@ export default function MenuManager() {
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-[0.2em] px-0.5" style={{ color: 'var(--text-dim)' }}>Description</label>
                 <textarea rows={3} className="input-saanam resize-none" placeholder="A brief description of the dish..." value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+              </div>
+
+              {/* Automatic Portions Preview */}
+              <div className="p-5 rounded-2xl bg-zinc-900/50 border border-white/5 space-y-4">
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div className={`w-10 h-6 p-1 rounded-full transition-all ${formData.hasPortions ? 'bg-orange-500' : 'bg-zinc-700'}`}
+                    onClick={() => setFormData({...formData, hasPortions: !formData.hasPortions})}
+                  >
+                    <div className={`w-4 h-4 bg-white rounded-full transition-all ${formData.hasPortions ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                  </div>
+                  <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>Variable Portions (1/4, 1/2, 3/4)</span>
+                </label>
+
+                {formData.hasPortions && (
+                  <div className="grid grid-cols-3 gap-3 animate-in">
+                    <div className="p-3 rounded-xl bg-black/30 border border-white/5 text-center">
+                      <p className="text-[8px] font-bold uppercase tracking-widest opacity-40 mb-1">1/4 Price</p>
+                      <p className="text-sm font-black">₹{(formData.price * 0.25).toFixed(0)}</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-black/30 border border-white/5 text-center">
+                      <p className="text-[8px] font-bold uppercase tracking-widest opacity-40 mb-1">1/2 Price</p>
+                      <p className="text-sm font-black">₹{(formData.price * 0.5).toFixed(0)}</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-black/30 border border-white/5 text-center">
+                      <p className="text-[8px] font-bold uppercase tracking-widest opacity-40 mb-1">3/4 Price</p>
+                      <p className="text-sm font-black">₹{(formData.price * 0.75).toFixed(0)}</p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-wrap gap-8 pt-2">

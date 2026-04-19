@@ -24,6 +24,20 @@ export default function StatusBoard() {
     
     // Live clock
     const interval = setInterval(() => setTime(new Date()), 1000);
+
+    // Initial join check
+    if (localStorage.getItem('status_board_joined') === 'true') {
+      setIsOverlayVisible(false);
+      // We still need a click to resume AudioContext usually, 
+      // but we'll try to resume when the user interacts with the page elsewhere.
+      const resume = () => {
+        if (audioContextRef.current?.state === 'suspended') {
+          audioContextRef.current.resume();
+        }
+        window.removeEventListener('click', resume);
+      };
+      window.addEventListener('click', resume);
+    }
     
     return () => {
       socket.off('kds_update');
@@ -62,46 +76,41 @@ export default function StatusBoard() {
       const now = context.currentTime;
       
       // We'll create a musical "Ding-Dong" chime using two sets of oscillators
-      const playTone = (freq: number, startTime: number, duration: number) => {
+      const playTone = (freq: number, startTime: number, duration: number, volume: number = 0.4) => {
         const osc = context.createOscillator();
         const g = context.createGain();
         
         osc.type = "sine";
         osc.frequency.setValueAtTime(freq, startTime);
         
-        // Add a secondary harmonic for a richer "Bell" feel
-        const oscPrimary = context.createOscillator();
-        oscPrimary.type = "triangle";
-        oscPrimary.frequency.setValueAtTime(freq * 2, startTime);
-        const gPrimary = context.createGain();
+        // Bell-like harmonic
+        const harmonic = context.createOscillator();
+        harmonic.type = "triangle";
+        harmonic.frequency.setValueAtTime(freq * 1.5, startTime);
+        const gh = context.createGain();
 
         osc.connect(g);
-        oscPrimary.connect(gPrimary);
+        harmonic.connect(gh);
         g.connect(context.destination);
-        gPrimary.connect(context.destination);
+        gh.connect(context.destination);
 
-        // Exponential decay for that "Bell" chime effect
         g.gain.setValueAtTime(0, startTime);
-        g.gain.linearRampToValueAtTime(0.2, startTime + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+        g.gain.linearRampToValueAtTime(volume, startTime + 0.05);
+        g.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
 
-        gPrimary.gain.setValueAtTime(0, startTime);
-        gPrimary.gain.linearRampToValueAtTime(0.05, startTime + 0.02);
-        gPrimary.gain.exponentialRampToValueAtTime(0.001, startTime + 0.1);
+        gh.gain.setValueAtTime(0, startTime);
+        gh.gain.linearRampToValueAtTime(volume * 0.3, startTime + 0.05);
+        gh.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
 
         osc.start(startTime);
-        oscPrimary.start(startTime);
+        harmonic.start(startTime);
         osc.stop(startTime + duration);
-        oscPrimary.stop(startTime + duration);
+        harmonic.stop(startTime + duration);
       };
 
-      // Play the musical chime: Note E5 followed by G5
-      playTone(659.25, now, 1.0); // E5
-      setTimeout(() => {
-        if (audioContextRef.current) {
-          playTone(783.99, now + 0.15, 0.8); // G5
-        }
-      }, 150);
+      // Play the musical chime: Note G5 followed by C5 (Classic Doorbell/Chime)
+      playTone(783.99, now, 0.8, 0.6); // G5
+      playTone(523.25, now + 0.4, 1.2, 0.6); // C5
 
     } catch (e) {
       console.error("Audio failed", e);
@@ -290,12 +299,23 @@ export default function StatusBoard() {
       <footer className="p-8 lg:p-10 flex justify-between items-center shrink-0"
         style={{ background: '#000', borderTop: '1px solid var(--border)' }}
       >
-        <div className="flex items-center gap-3">
-          <Flame size={16} style={{ color: 'var(--accent)' }} />
-          <span className="text-[10px] font-bold uppercase tracking-[0.3em]" style={{ color: 'var(--text-dim)' }}>
-            26:07 <span style={{ color: 'var(--accent)' }}>Suite</span>
-          </span>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3">
+            <Flame size={16} style={{ color: 'var(--accent)' }} />
+            <span className="text-sm font-black uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
+              {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} <span style={{ color: 'var(--accent)' }}>Suite</span>
+            </span>
+          </div>
+          
+          <button 
+            onClick={playNotificationSound}
+            className="px-4 py-2 rounded-xl bg-zinc-900 border border-white/5 text-[9px] font-black uppercase tracking-widest hover:bg-zinc-800 transition-all"
+            style={{ color: 'var(--text-dim)' }}
+          >
+            🔊 Test Chime
+          </button>
         </div>
+
         <div className="flex flex-col items-end gap-1.5">
           <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>Kitchen Load</p>
           <div className="h-1.5 w-28 rounded-full overflow-hidden" style={{ background: 'var(--bg-elevated)' }}>

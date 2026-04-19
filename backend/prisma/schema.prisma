@@ -61,6 +61,7 @@ model MenuItem {
   isAvailable Boolean  @default(true)
   prepTime    Int      @default(10)
   image       String   @default("")
+  hasPortions Boolean  @default(false)
   
   orderItems  OrderItem[]
 }
@@ -112,6 +113,7 @@ model OrderItem {
   category   String    @default("")
   price      Float
   quantity   Int
+  portion    String    @default("FULL")
   notes      String    @default("")
   status     String    @default("PENDING") // PENDING, PREPARING, READY, COMPLETED
 }
