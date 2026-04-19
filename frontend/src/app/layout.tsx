@@ -8,17 +8,17 @@ const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   display: "swap",
+  weight: ['400', '500', '600', '700', '800', '900'],
 });
 
 export const metadata: Metadata = {
-  title: "RestoPro — Restaurant Management System",
-  description: "Smart queue, table, POS & kitchen management for modern restaurants",
+  title: "RestoPro Cloud — High Performance Restaurant Management",
+  description: "Enterprise-grade POS, Kitchen (KDS), and Analytics suite for modern restaurant operations.",
   manifest: "/manifest.json",
-  themeColor: "#111827",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "RestoPro POS",
+    title: "RestoPro Console",
   },
 };
 
@@ -28,23 +28,29 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body className="antialiased bg-surface text-gray-900 font-sans">
+    <html lang="en" className={`${inter.variable} scroll-smooth`}>
+      <body className="antialiased bg-[var(--background)] text-[var(--text-main)] font-sans selection:bg-emerald-100 selection:text-emerald-900">
         <AppLayout>{children}</AppLayout>
         <Toaster
-          position="top-right"
+          position="bottom-right"
           toastOptions={{
-            duration: 3000,
+            duration: 4000,
             style: {
-              background: "#1F2937",
+              background: "#0f172a",
               color: "#fff",
-              borderRadius: "12px",
-              padding: "12px 16px",
-              fontSize: "14px",
-              fontWeight: "500",
+              borderRadius: "16px",
+              padding: "16px 24px",
+              fontSize: "13px",
+              fontWeight: "600",
+              border: "1px solid rgba(255,255,255,0.1)",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.2)",
             },
-            success: { iconTheme: { primary: "#22C55E", secondary: "#fff" } },
-            error: { iconTheme: { primary: "#EF4444", secondary: "#fff" } },
+            success: { 
+              iconTheme: { primary: "#10b981", secondary: "#fff" },
+            },
+            error: { 
+              iconTheme: { primary: "#f43f5e", secondary: "#fff" },
+            },
           }}
         />
       </body>

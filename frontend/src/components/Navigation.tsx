@@ -2,7 +2,18 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { Users, Grid, ShoppingBag, ChefHat, LayoutDashboard, LogOut, Menu, X } from "lucide-react";
+import { 
+  Users, 
+  Grid, 
+  ShoppingBag, 
+  ChefHat, 
+  LayoutDashboard, 
+  LogOut, 
+  Menu, 
+  X,
+  Settings,
+  Bell
+} from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
@@ -19,30 +30,34 @@ export function Navigation() {
   };
 
   const links = [
-    { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-    { href: "/pos", label: "Point of Sale", icon: ShoppingBag },
-    { href: "/tables", label: "Operations", icon: Grid },
-    { href: "/kds", label: "Kitchen KDS", icon: ChefHat },
-    { href: "/queue", label: "Waiting List", icon: Users },
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/pos", label: "POS Terminal", icon: ShoppingBag },
+    { href: "/tables", label: "Tables", icon: Grid },
+    { href: "/kds", label: "Kitchen", icon: ChefHat },
+    { href: "/queue", label: "Queue", icon: Users },
   ];
 
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 h-screen bg-white border-r border-slate-100 sticky top-0 shrink-0 z-40">
-        <div className="p-8">
-          <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-600/20">
-                <ChefHat size={20} className="text-white" />
+      <aside className="hidden lg:flex flex-col w-72 h-screen bg-white border-r border-slate-100 sticky top-0 shrink-0 z-40">
+        <div className="p-8 mb-4">
+          <div className="flex items-center gap-3.5">
+             <div className="w-11 h-11 bg-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200">
+                <ChefHat size={22} className="text-white" />
              </div>
              <div>
-                <h1 className="text-lg font-bold text-slate-900 tracking-tight leading-none">RestoPro</h1>
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mt-1">v2.0 Beta</p>
+                <h1 className="text-xl font-bold text-slate-900 tracking-tight leading-tight">RestoPro</h1>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Enterprise v2</p>
+                </div>
              </div>
           </div>
         </div>
         
-        <nav className="flex-1 px-4 space-y-1 mt-4">
+        <div className="flex-1 px-6 space-y-1.5">
+          <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4">Main Menu</p>
           {links.map((link) => {
             const isActive = pathname.startsWith(link.href);
             const Icon = link.icon;
@@ -50,72 +65,93 @@ export function Navigation() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative ${
-                  isActive
-                    ? "bg-emerald-50 text-emerald-700"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
-                }`}
+                className={`nav-item group ${isActive ? "nav-item-active" : ""}`}
               >
-                <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className={isActive ? "text-emerald-600" : "group-hover:text-slate-900"} />
-                <span className="text-sm font-medium">{link.label}</span>
+                <Icon size={20} strokeWidth={isActive ? 2.5 : 2} className={isActive ? "text-emerald-600" : "text-slate-400 group-hover:text-slate-600"} />
+                <span className="text-sm">{link.label}</span>
                 {isActive && (
-                  <div className="absolute left-0 w-1 h-6 bg-emerald-600 rounded-r-full"></div>
+                   <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
                 )}
               </Link>
             );
           })}
-        </nav>
+
+          <div className="pt-8">
+            <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4">Support & Tools</p>
+            <Link href="/settings" className="nav-item group">
+              <Settings size={20} className="text-slate-400 group-hover:text-slate-600" />
+              <span className="text-sm font-medium">Settings</span>
+            </Link>
+          </div>
+        </div>
 
         <div className="p-6 border-t border-slate-50">
-           <div className="flex items-center gap-3 px-2 mb-6">
-              <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-emerald-600 font-bold text-xs">S</div>
-              <div className="flex-1 min-w-0">
-                 <p className="text-xs font-semibold text-slate-900 truncate">Administrator</p>
-                 <p className="text-[10px] text-slate-400 truncate">Online</p>
+           <div className="bg-slate-50/80 rounded-2xl p-4 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-emerald-600 font-bold text-sm">JS</div>
+                <div className="flex-1 min-w-0">
+                   <p className="text-sm font-bold text-slate-900 truncate">John Smith</p>
+                   <p className="text-[11px] font-medium text-slate-500 truncate">Manager</p>
+                </div>
+                <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+                  <Bell size={18} />
+                </button>
               </div>
            </div>
            
            <button 
              onClick={handleLogout}
-             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-50 hover:bg-red-50 text-slate-600 hover:text-red-600 rounded-xl transition-all duration-200 font-semibold text-xs border border-transparent hover:border-red-100"
+             className="w-full flex items-center justify-center gap-2.5 px-4 py-3 bg-white hover:bg-rose-50 text-slate-600 hover:text-rose-600 rounded-[var(--radius-md)] transition-all duration-200 font-bold text-xs border border-slate-100 hover:border-rose-100"
            >
-             <LogOut size={14} />
-             Sign Out
+             <LogOut size={16} />
+             Sign Out System
            </button>
         </div>
       </aside>
 
-      {/* Mobile Header & Bottom Nav */}
-      <div className="md:hidden flex flex-col">
-        <header className="fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-slate-100 flex items-center justify-between px-6 z-50">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
-              <ChefHat size={16} className="text-white" />
+      {/* Mobile Experience */}
+      <div className="lg:hidden">
+        <header className="fixed top-0 left-0 right-0 h-20 bg-white/70 backdrop-blur-xl border-b border-slate-100 flex items-center justify-between px-6 z-50">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-100">
+              <ChefHat size={20} className="text-white" />
             </div>
-            <span className="text-sm font-bold text-slate-900">RestoPro</span>
+            <span className="text-lg font-bold text-slate-900 tracking-tight">RestoPro</span>
           </div>
-          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-slate-600">
+          <button 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 transition-all"
+          >
             {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </header>
 
-        {/* Mobile Sidebar Overlay */}
+        {/* Mobile Menu Overlay */}
         {isMobileMenuOpen && (
-          <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40 md:hidden" onClick={() => setIsMobileMenuOpen(false)}>
-            <div className="absolute right-0 top-0 bottom-0 w-64 bg-white p-6 shadow-2xl animate-fade-in" onClick={e => e.stopPropagation()}>
-               <div className="mt-12 space-y-2">
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[60]" onClick={() => setIsMobileMenuOpen(false)}>
+            <div className="absolute top-4 right-4 bottom-4 w-72 bg-white rounded-3xl shadow-2xl p-6 flex flex-col animate-in" onClick={e => e.stopPropagation()}>
+               <div className="flex justify-between items-center mb-8">
+                  <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">Navigation</span>
+                  <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-400"><X size={20} /></button>
+               </div>
+               <div className="space-y-2 flex-1">
                   {links.map((link) => (
                     <Link
                       key={link.href}
                       href={link.href}
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-lg ${pathname.startsWith(link.href) ? "bg-emerald-50 text-emerald-700" : "text-slate-600"}`}
+                      className={`nav-item ${pathname.startsWith(link.href) ? "nav-item-active" : ""}`}
                     >
-                      <link.icon size={18} />
-                      <span className="text-sm font-medium">{link.label}</span>
+                      <link.icon size={20} />
+                      <span className="text-sm font-semibold">{link.label}</span>
                     </Link>
                   ))}
-                  <button onClick={handleLogout} className="w-full mt-4 flex items-center gap-3 px-4 py-3 bg-slate-50 text-red-600 rounded-lg text-sm font-medium">
+               </div>
+               <div className="pt-6 border-t border-slate-100">
+                  <button 
+                    onClick={handleLogout} 
+                    className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-rose-50 text-rose-600 rounded-2xl text-sm font-bold"
+                  >
                     <LogOut size={18} />
                     Sign Out
                   </button>
@@ -124,7 +160,8 @@ export function Navigation() {
           </div>
         )}
 
-        <nav className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-slate-100 flex justify-around items-center px-4 z-50">
+        {/* Floating Bottom Nav (Mobile) */}
+        <nav className="fixed bottom-6 left-6 right-6 h-16 bg-white/90 backdrop-blur-xl border border-slate-100 shadow-2xl shadow-slate-200/50 rounded-2xl flex justify-around items-center px-4 z-50">
           {links.slice(0, 4).map((link) => {
             const isActive = pathname.startsWith(link.href);
             const Icon = link.icon;
@@ -132,12 +169,11 @@ export function Navigation() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`flex flex-col items-center justify-center px-4 py-1 rounded-xl transition-all duration-200 ${
-                  isActive ? "text-emerald-600" : "text-slate-400"
+                className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all duration-300 ${
+                  isActive ? "bg-emerald-600 text-white shadow-lg shadow-emerald-200" : "text-slate-400"
                 }`}
               >
                 <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-[10px] font-bold mt-1 uppercase tracking-tighter">{link.label.split(' ')[0]}</span>
               </Link>
             );
           })}
@@ -146,3 +182,4 @@ export function Navigation() {
     </>
   );
 }
+
