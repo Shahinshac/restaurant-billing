@@ -469,7 +469,12 @@
   /* Remove default browser headers/footers */
   @page {
     margin: 0;
-    size: auto;
+    size: 80mm auto;
+  }
+
+  html, body {
+    height: auto !important;
+    min-height: 0 !important;
   }
 
   /* Hide print-hidden items specifically */
