@@ -124,14 +124,15 @@ router.post('/', async (req, res) => {
 
        let updateTable = null;
        if (tableId && orderType !== 'TAKEAWAY') {
-         updateTable = await tx.table.update({
-           where: { id: tableId },
-           data: {
-             status: 'OCCUPIED',
-             currentOrderId: order.id,
-             occupiedAt: new Date()
-           }
-         });
+          updateTable = await tx.table.update({
+            where: { id: tableId },
+            data: {
+              status: 'OCCUPIED',
+              currentOrderId: order.id,
+              occupiedAt: new Date()
+            },
+            include: { currentOrder: { include: { items: true } } }
+          });
        }
 
        return { order, updateTable };
@@ -169,14 +170,15 @@ router.post('/:id/pay', async (req, res) => {
 
        let updatedTable = null;
        if (order.tableId) {
-          updatedTable = await tx.table.update({
-             where: { id: order.tableId },
-             data: {
-               status: 'FREE',
-               currentOrderId: null,
-               occupiedAt: null
-             }
-          });
+           updatedTable = await tx.table.update({
+              where: { id: order.tableId },
+              data: {
+                status: 'FREE',
+                currentOrderId: null,
+                occupiedAt: null
+              },
+              include: { currentOrder: { include: { items: true } } }
+           });
        }
 
        return { order, updatedTable };

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
+import { socket } from "@/lib/socket";
 import toast from "react-hot-toast";
 import { 
   ShoppingBag, 
@@ -64,14 +65,33 @@ export default function POSTerminal() {
 
        setSelectedTableId(table.id);
        setActiveOrderId(table.currentOrderId);
-       setCart(table.currentOrder.items.map((i: any) => ({
-         id: i.menuItemId || i.id,
-         name: i.itemName,
-         price: i.price,
-         quantity: i.quantity,
-         isExisting: true
-       })));
-       toast.success(`Active bill loaded for Table ${table.tableNumber}`);
+       
+       if (table.currentOrder && table.currentOrder.items) {
+         setCart(table.currentOrder.items.map((i: any) => ({
+           id: i.menuItemId || i.id,
+           name: i.itemName,
+           price: i.price,
+           quantity: i.quantity,
+           isExisting: true
+         })));
+         toast.success(`Bill loaded: Table ${table.tableNumber}`);
+       } else {
+         // Fallback if data is missing - fetch fresh
+         api.get(`/tables/${table.id}`).then(res => {
+            const freshTable = res.data.data;
+            if (freshTable.currentOrder) {
+              setCart(freshTable.currentOrder.items.map((i: any) => ({
+                id: i.menuItemId || i.id,
+                name: i.itemName,
+                price: i.price,
+                quantity: i.quantity,
+                isExisting: true
+              })));
+              setTables(prev => prev.map(t => t.id === freshTable.id ? freshTable : t));
+              toast.success(`Bill Sync Complete`);
+            }
+         });
+       }
     } else {
        // Switching to an AVAILABLE table (Assign Table)
        setSelectedTableId(table.id);
@@ -109,6 +129,19 @@ export default function POSTerminal() {
 
   useEffect(() => {
     fetchInitialData();
+
+    socket.on('table_updated', (data) => {
+      setTables(prev => prev.map(t => t.id === data.table.id ? data.table : t));
+    });
+
+    socket.on('order_updated', () => {
+      fetchInitialData();
+    });
+
+    return () => {
+      socket.off('table_updated');
+      socket.off('order_updated');
+    };
   }, []);
 
   const fetchInitialData = async () => {
