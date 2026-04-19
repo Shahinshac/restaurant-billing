@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ShoppingBag, Lock, User } from "lucide-react";
+import { Lock, User, Flame, ArrowRight } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function LoginPage() {
@@ -15,112 +15,136 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
 
-    // Simulated login for professional feel
     setTimeout(() => {
       if (username === "shahinsha" && password === "262007") {
         localStorage.setItem("isLoggedIn", "true");
         localStorage.setItem("user", JSON.stringify({ name: "Shahinsha", role: "admin" }));
-        toast.success("Login Successful", {
-          style: {
-            borderRadius: '12px',
-            background: '#FFFFFF',
-            color: '#1F2937',
-            border: '1px solid #E5E7EB',
-            fontSize: '14px',
-          },
-        });
+        toast.success("Welcome back, Shahinsha");
         router.push("/dashboard");
       } else {
-        toast.error("Invalid credentials. Please try again.", {
-          style: {
-            borderRadius: '12px',
-          }
-        });
+        toast.error("Invalid credentials");
         setLoading(false);
       }
-    }, 1000);
+    }, 1200);
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#F8F9FB] p-6 lg:p-12 font-sans">
-      {/* Top Logo */}
-      <div className="mb-12 flex flex-col items-center">
-        <div className="w-16 h-16 bg-[#FF6B35] rounded-2xl flex items-center justify-center shadow-lg mb-4">
-          <ShoppingBag size={32} className="text-white" />
-        </div>
-        <h1 className="text-3xl font-black text-[#1F2937] tracking-tight">RESTOPRO</h1>
-        <p className="text-[#6B7280] text-sm mt-1 font-medium">Point of Sale System</p>
+    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden" style={{ background: 'var(--bg-deep)' }}>
+      
+      {/* Ambient Background */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Gradient orbs */}
+        <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full animate-float"
+          style={{ background: 'radial-gradient(circle, rgba(249,115,22,0.12) 0%, transparent 70%)' }}
+        />
+        <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 60%)', animationDelay: '1.5s' }}
+        />
+        {/* Dot grid */}
+        <div className="absolute inset-0 dot-grid opacity-40"></div>
       </div>
 
-      {/* Login Card */}
-      <div className="w-full max-w-[460px] bg-white rounded-[20px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[#E5E7EB] p-10 lg:p-14 transition-all animate-fade-in">
-        <div className="mb-10">
-          <h2 className="text-2xl font-bold text-[#1F2937] mb-2">Welcome Back</h2>
-          <p className="text-[#6B7280] text-sm">Please enter your details to sign in.</p>
-        </div>
-
-        <form onSubmit={handleLogin} className="space-y-6">
-          {/* User ID Input */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-[#1F2937] ml-1">User ID</label>
-            <div className="relative group">
-              <input
-                type="text"
-                required
-                className="w-full h-[56px] bg-[#F9FAFB] border border-[#E5E7EB] rounded-[12px] px-12 text-[#1F2937] font-medium outline-none focus:border-[#FF6B35] focus:bg-white transition-all"
-                placeholder="Enter operator ID"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF] group-focus-within:text-[#FF6B35] transition-colors">
-                <User size={20} />
-              </div>
-            </div>
-          </div>
-
-          {/* Password Input */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-[#1F2937] ml-1">Password</label>
-            <div className="relative group">
-              <input
-                type="password"
-                required
-                className="w-full h-[56px] bg-[#F9FAFB] border border-[#E5E7EB] rounded-[12px] px-12 text-[#1F2937] font-medium outline-none focus:border-[#FF6B35] focus:bg-white transition-all"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF] group-focus-within:text-[#FF6B35] transition-colors">
-                <Lock size={20} />
-              </div>
-            </div>
-          </div>
-
-          {/* Login Button */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full h-[56px] bg-[#FF6B35] hover:bg-[#FF8C5E] active:scale-[0.99] disabled:opacity-50 text-white font-bold rounded-[14px] shadow-lg shadow-orange-500/10 transition-all flex items-center justify-center text-lg mt-8"
+      <div className="relative z-10 w-full max-w-[440px] mx-6">
+        
+        {/* Logo */}
+        <div className="flex flex-col items-center mb-10 animate-slide-up">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+            style={{
+              background: 'linear-gradient(135deg, var(--accent), #ea580c)',
+              boxShadow: '0 12px 40px rgba(249, 115, 22, 0.35)',
+            }}
           >
-            {loading ? (
-              <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
-            ) : (
-              "Login"
-            )}
-          </button>
-        </form>
-
-        <div className="mt-12 text-center">
-          <p className="text-[#9CA3AF] text-xs font-medium uppercase tracking-wider">
-            Enterprise Management v4.0.0
+            <Flame size={32} className="text-white" />
+          </div>
+          <h1 className="text-3xl font-black tracking-tight" style={{ fontFamily: 'var(--font-outfit), sans-serif', color: 'var(--text-primary)' }}>
+            Saanam
+          </h1>
+          <p className="text-sm mt-1 font-medium" style={{ color: 'var(--text-tertiary)' }}>
+            Restaurant Management Suite
           </p>
         </div>
-      </div>
 
-      {/* Helper text */}
-      <p className="mt-8 text-[#6B7280] text-sm">
-        Having trouble? <span className="text-[#FF6B35] font-semibold cursor-pointer">Contact Support</span>
-      </p>
+        {/* Login Card */}
+        <div 
+          className="rounded-3xl p-10 animate-in"
+          style={{
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            boxShadow: '0 25px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.03)',
+          }}
+        >
+          <div className="mb-8">
+            <h2 className="text-xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>Welcome back</h2>
+            <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Enter your credentials to continue</p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-5">
+            {/* Username */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold ml-0.5" style={{ color: 'var(--text-secondary)' }}>User ID</label>
+              <div className="relative group">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 transition-colors" style={{ color: 'var(--text-dim)' }}>
+                  <User size={18} />
+                </div>
+                <input
+                  type="text"
+                  required
+                  className="input-saanam pl-12"
+                  placeholder="Enter your username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold ml-0.5" style={{ color: 'var(--text-secondary)' }}>Password</label>
+              <div className="relative group">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 transition-colors" style={{ color: 'var(--text-dim)' }}>
+                  <Lock size={18} />
+                </div>
+                <input
+                  type="password"
+                  required
+                  className="input-saanam pl-12"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-saanam w-full mt-3 text-base"
+              style={{ padding: '16px 28px' }}
+            >
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              ) : (
+                <>
+                  Sign In
+                  <ArrowRight size={18} />
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="mt-8 text-center">
+            <p className="text-[11px] font-medium uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
+              Saanam Suite v2.0
+            </p>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <p className="text-center mt-6 text-sm" style={{ color: 'var(--text-dim)' }}>
+          Need help? <span className="font-semibold cursor-pointer" style={{ color: 'var(--accent)' }}>Contact Support</span>
+        </p>
+      </div>
     </div>
   );
 }

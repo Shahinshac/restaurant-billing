@@ -3,7 +3,7 @@
 import { useEffect, useState, use } from "react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
-import { ShoppingBag, Star, ChevronRight, Check, Plus } from "lucide-react";
+import { ShoppingBag, Star, ChevronRight, Plus, Flame } from "lucide-react";
 
 export default function DigitalMenu({ params }: { params: Promise<{ tableId: string }> }) {
   const unwrappedParams = use(params);
@@ -31,7 +31,7 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
       setMenu(items.data.data);
       setTableInfo(tableRes.data.data);
     } catch (error) {
-      toast.error("Network synchronization error");
+      toast.error("Failed to load menu");
     } finally {
       setLoading(false);
     }
@@ -59,50 +59,70 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
       } else {
         await api.post('/orders', { tableId: tableId, items: cart });
       }
-      toast.success("Ticket sent to kitchen!", { position: 'bottom-center' });
+      toast.success("Order sent to kitchen!", { position: 'bottom-center' });
       setCart([]);
       fetchData(); 
     } catch (error) {
-       toast.error("Failed to process request");
+       toast.error("Failed to place order");
     }
   };
 
   if (loading) return (
-    <div className="p-20 flex flex-col items-center justify-center min-h-screen bg-white">
-       <div className="w-8 h-8 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin"></div>
+    <div className="flex items-center justify-center min-h-screen" style={{ background: 'var(--bg-deep)' }}>
+      <div className="w-8 h-8 border-[3px] rounded-full animate-spin"
+        style={{ borderColor: 'var(--bg-elevated)', borderTopColor: 'var(--accent)' }}
+      ></div>
     </div>
   );
 
   const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   return (
-    <div className="bg-slate-50 min-h-screen pb-32 font-sans animate-slide-up no-scrollbar">
-      {/* Branding Header */}
-      <div className="bg-white px-6 py-10 rounded-b-[2.5rem] shadow-sm sticky top-0 z-10 border-b border-slate-100">
+    <div className="min-h-screen pb-28 no-scrollbar" style={{ background: 'var(--bg-deep)' }}>
+      {/* Header */}
+      <div className="px-5 pt-8 pb-6 sticky top-0 z-10 rounded-b-3xl"
+        style={{ background: 'var(--glass-heavy)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}
+      >
         <div className="flex justify-between items-start">
-           <div>
-              <h1 className="text-3xl font-bold text-slate-900 tracking-tight">RestoPro <span className="text-emerald-600">Indian</span></h1>
-              <div className="flex items-center gap-2 mt-2">
-                 <div className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                    Table {tableInfo?.tableNumber}
-                 </div>
-                 <div className="flex items-center gap-1 text-slate-400 text-xs font-medium">
-                    <Star size={12} className="text-amber-400 fill-amber-400" />
-                    4.9 (500+ Reviews)
-                 </div>
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Flame size={18} style={{ color: 'var(--accent)' }} />
+              <h1 className="text-2xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-outfit), sans-serif', color: 'var(--text-primary)' }}>
+                Saanam
+              </h1>
+            </div>
+            <div className="flex items-center gap-2 mt-1.5">
+              <span className="badge badge-accent text-[9px]">
+                Table {tableInfo?.tableNumber}
+              </span>
+              <div className="flex items-center gap-1 text-xs font-medium" style={{ color: 'var(--text-dim)' }}>
+                <Star size={12} className="fill-yellow-500 text-yellow-500" />
+                4.9
               </div>
-           </div>
-           <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300">
-              <ShoppingBag size={24} />
-           </div>
+            </div>
+          </div>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+            style={{ background: 'var(--bg-elevated)', color: 'var(--text-dim)' }}
+          >
+            <ShoppingBag size={20} />
+          </div>
         </div>
         
-        <div className="flex gap-2.5 overflow-x-auto mt-8 pb-1 no-scrollbar">
+        {/* Categories */}
+        <div className="flex gap-2 overflow-x-auto mt-6 pb-1 no-scrollbar">
           {categories.map(c => (
             <button 
               key={c} 
               onClick={() => setActiveCategory(c)}
-              className={`px-6 py-2.5 rounded-xl font-bold text-[11px] uppercase tracking-wider whitespace-nowrap transition-all ${activeCategory === c ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 shadow-lg' : 'bg-slate-50 text-slate-400 hover:text-slate-600'}`}
+              className="px-5 py-2 rounded-lg font-bold text-[11px] uppercase tracking-wider whitespace-nowrap transition-all"
+              style={activeCategory === c ? {
+                background: 'linear-gradient(135deg, var(--accent), #ea580c)',
+                color: '#fff',
+                boxShadow: '0 4px 16px rgba(249,115,22,0.3)',
+              } : {
+                background: 'var(--bg-elevated)',
+                color: 'var(--text-dim)',
+              }}
             >
               {c}
             </button>
@@ -110,52 +130,72 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
         </div>
       </div>
 
-      {/* Menu List */}
-      <div className="p-6 space-y-4">
-        <div className="flex items-center justify-between mb-4">
-           <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{activeCategory} Selection</h2>
-           <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">{filteredMenu.length} Options</span>
+      {/* Menu Items */}
+      <div className="p-5 space-y-3">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
+            {activeCategory} Menu
+          </h2>
+          <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--accent)' }}>
+            {filteredMenu.length} items
+          </span>
         </div>
         
         {filteredMenu.map(item => (
-          <div key={item.id} className="bg-white p-5 rounded-3xl shadow-sm border border-slate-50 flex gap-5 transition-all active:scale-[0.98]">
+          <div key={item.id} className="flex gap-4 p-4 rounded-2xl transition-all active:scale-[0.98]"
+            style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
+          >
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1.5">
-                 <div className={`w-2.5 h-2.5 rounded-full ${item.isVeg ? 'bg-emerald-500' : 'bg-rose-500'} ring-4 ring-white shadow-sm`}></div>
-                 <h3 className="font-bold text-slate-900 text-base lg:text-lg truncate">{item.name}</h3>
+              <div className="flex items-center gap-2 mb-1">
+                <div className={`w-2.5 h-2.5 rounded-sm border ${item.isVeg ? 'bg-emerald-500 border-emerald-400' : 'bg-rose-500 border-rose-400'}`}></div>
+                <h3 className="font-bold text-sm truncate" style={{ color: 'var(--text-primary)' }}>{item.name}</h3>
               </div>
-              <p className="text-xs text-slate-400 font-medium line-clamp-2 mt-1">{item.description || 'Authentic spices and ingredients.'}</p>
-              <p className="font-bold text-slate-900 mt-4 text-base">₹{item.price}</p>
+              <p className="text-[11px] font-medium line-clamp-2 mt-0.5" style={{ color: 'var(--text-dim)' }}>
+                {item.description || 'Authentic spices and ingredients.'}
+              </p>
+              <p className="font-bold mt-3 text-sm" style={{ color: 'var(--text-primary)' }}>₹{item.price}</p>
             </div>
             <div className="flex items-end shrink-0">
-               <button 
+              <button 
                 onClick={() => addToCart(item)} 
-                className="w-12 h-12 bg-white text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-2xl border border-emerald-100 flex items-center justify-center transition-all shadow-sm"
-               >
-                 <Plus size={18} strokeWidth={3} />
-               </button>
+                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90"
+                style={{ background: 'var(--accent-soft)', color: 'var(--accent)', border: '1px solid var(--accent-border)' }}
+              >
+                <Plus size={16} strokeWidth={3} />
+              </button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Cart Drawer */}
+      {/* Cart Bar */}
       {cart.length > 0 && (
-        <div className="fixed bottom-6 left-6 right-6 lg:left-auto lg:right-6 lg:w-96 bg-slate-900 text-white rounded-[2rem] shadow-2xl p-6 flex items-center justify-between z-50 animate-slide-up border border-slate-800">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center font-bold text-sm">
-               {cart.reduce((Acc, i) => Acc + i.quantity, 0)}
+        <div className="fixed bottom-5 left-5 right-5 lg:left-auto lg:right-5 lg:w-96 p-5 flex items-center justify-between z-50 rounded-2xl animate-slide-up"
+          style={{
+            background: 'var(--glass)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: '1px solid var(--border)',
+            boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
+          }}
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm"
+              style={{ background: 'linear-gradient(135deg, var(--accent), #ea580c)', color: '#fff' }}
+            >
+              {cart.reduce((acc, i) => acc + i.quantity, 0)}
             </div>
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Basket Total</p>
-              <p className="text-xl font-bold text-white tracking-tight">₹{cartTotal}</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>Total</p>
+              <p className="text-lg font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>₹{cartTotal}</p>
             </div>
           </div>
           <button 
             onClick={placeOrder} 
-            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3.5 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg shadow-emerald-600/20 active:scale-95"
+            className="btn-saanam text-xs uppercase tracking-widest"
+            style={{ padding: '12px 20px' }}
           >
-            Review
+            Order
             <ChevronRight size={14} />
           </button>
         </div>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
-import { Calendar, Users, Phone, Mail, User, Clock, MessageSquare, CheckCircle } from "lucide-react";
+import { Calendar, Users, Phone, Mail, User, Clock, MessageSquare, CheckCircle, Flame, Sparkles } from "lucide-react";
 
 export default function BookingPage() {
   const [loading, setLoading] = useState(false);
@@ -28,7 +28,7 @@ export default function BookingPage() {
         bookingDate: dateTime
       });
       setSuccess(true);
-      toast.success("Reservation Request Sent!");
+      toast.success("Reservation confirmed!");
     } catch (error) {
       toast.error("Failed to process reservation");
     } finally {
@@ -38,132 +38,153 @@ export default function BookingPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-sans">
-        <div className="bg-white rounded-[3rem] p-12 max-w-lg w-full text-center shadow-2xl border border-slate-100 animate-slide-up">
-           <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto mb-8">
-              <CheckCircle size={48} />
-           </div>
-           <h1 className="text-3xl font-bold text-slate-900 mb-4 tracking-tight">Reservation Confirmed</h1>
-           <p className="text-slate-500 font-medium leading-relaxed mb-10">
-             Thank you, <span className="text-slate-900 font-bold">{formData.customerName}</span>. 
-             We've successfully reserved a spot for <span className="text-slate-900 font-bold">{formData.partySize} guests</span> on <span className="text-slate-900 font-bold">{formData.bookingDate}</span>.
-           </p>
-           <button 
+      <div className="min-h-screen flex items-center justify-center p-6" style={{ background: 'var(--bg-deep)' }}>
+        <div className="rounded-3xl p-12 max-w-lg w-full text-center animate-scale-in"
+          style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}
+        >
+          <div className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-8"
+            style={{ background: 'var(--success-soft)', color: 'var(--success)' }}
+          >
+            <CheckCircle size={44} />
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight mb-4" style={{ fontFamily: 'var(--font-outfit), sans-serif', color: 'var(--text-primary)' }}>
+            Reservation Confirmed
+          </h1>
+          <p className="font-medium leading-relaxed mb-10" style={{ color: 'var(--text-tertiary)' }}>
+            Thank you, <span className="font-bold" style={{ color: 'var(--text-primary)' }}>{formData.customerName}</span>. 
+            We've reserved a table for <span className="font-bold" style={{ color: 'var(--text-primary)' }}>{formData.partySize} guests</span> on <span className="font-bold" style={{ color: 'var(--text-primary)' }}>{formData.bookingDate}</span>.
+          </p>
+          <button 
             onClick={() => window.location.reload()}
-            className="w-full bg-slate-900 text-white py-5 rounded-2xl font-bold text-xs uppercase tracking-widest shadow-xl hover:bg-black transition-all"
-           >
-             Book Another Table
-           </button>
+            className="btn-saanam w-full"
+          >
+            Book Another Table
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-20 px-6 font-sans flex flex-col items-center">
-      <div className="max-w-4xl w-full grid grid-cols-1 lg:grid-cols-2 bg-white rounded-[3rem] shadow-2xl overflow-hidden border border-slate-100 animate-slide-up">
+    <div className="min-h-screen py-16 px-6 flex flex-col items-center" style={{ background: 'var(--bg-deep)' }}>
+      <div className="max-w-4xl w-full grid grid-cols-1 lg:grid-cols-2 rounded-3xl overflow-hidden animate-slide-up"
+        style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}
+      >
         
-        {/* Left: Info Side */}
-        <div className="bg-slate-900 p-12 lg:p-16 text-white flex flex-col justify-between relative overflow-hidden">
-           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-600/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
-           
-           <div>
-              <div className="px-4 py-1.5 bg-emerald-600/20 text-emerald-400 rounded-full text-[10px] font-bold uppercase tracking-widest inline-block mb-6">
-                 Dine-In Reservations
+        {/* Left: Brand Side */}
+        <div className="p-12 lg:p-14 flex flex-col justify-between relative overflow-hidden"
+          style={{ background: 'linear-gradient(135deg, #18181b, #09090b)' }}
+        >
+          <div className="absolute top-0 right-0 w-64 h-64 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"
+            style={{ background: 'rgba(249,115,22,0.1)' }}
+          ></div>
+          
+          <div className="relative z-10">
+            <div className="badge badge-accent inline-flex mb-6">
+              <Sparkles size={10} />
+              Reservations
+            </div>
+            <h1 className="text-4xl lg:text-5xl font-bold tracking-tighter leading-none mb-5"
+              style={{ fontFamily: 'var(--font-outfit), sans-serif', color: 'var(--text-primary)' }}
+            >
+              Reserve your <span className="text-gradient">experience.</span>
+            </h1>
+            <p className="font-medium leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>
+              Join us for an unforgettable culinary journey. Provide your details and we'll handle the rest.
+            </p>
+          </div>
+          
+          <div className="space-y-5 mt-12 lg:mt-0 relative z-10">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ background: 'var(--bg-elevated)', color: 'var(--accent)' }}
+              >
+                <Clock size={18} />
               </div>
-              <h1 className="text-5xl font-bold tracking-tighter leading-none mb-6">Reserve your <span className="text-emerald-500">experience.</span></h1>
-              <p className="text-slate-400 font-medium leading-relaxed">Join us for an unforgettable culinary journey. Provide your details and we'll handle the rest.</p>
-           </div>
-           
-           <div className="space-y-6 mt-12 lg:mt-0">
-              <div className="flex items-center gap-4">
-                 <div className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-emerald-500">
-                    <Clock size={18} />
-                </div>
-                <div>
-                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Opening Hours</p>
-                   <p className="text-sm font-semibold">12:00 PM • 11:30 PM</p>
-                </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>Opening Hours</p>
+                <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>12:00 PM — 11:30 PM</p>
               </div>
-              <div className="flex items-center gap-4">
-                 <div className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-emerald-500">
-                    <CheckCircle size={18} />
-                </div>
-                <div>
-                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Instant Confirmation</p>
-                   <p className="text-sm font-semibold">Real-time table availability</p>
-                </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ background: 'var(--bg-elevated)', color: 'var(--accent)' }}
+              >
+                <CheckCircle size={18} />
               </div>
-           </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>Instant Confirmation</p>
+                <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Real-time table availability</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Right: Form Side */}
-        <div className="p-10 lg:p-16">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-5">
+        <div className="p-10 lg:p-14">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-[0.2em] mb-2 block px-0.5" style={{ color: 'var(--text-dim)' }}>Full Name</label>
               <div className="relative">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 block px-1">Full Name</label>
-                <div className="relative">
-                   <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                   <input required type="text" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-sm font-bold outline-none focus:border-emerald-500/30 focus:ring-4 focus:ring-emerald-500/5 transition-all text-slate-900" placeholder="John Doe" value={formData.customerName} onChange={e => setFormData({...formData, customerName: e.target.value})} />
-                </div>
+                <User className="absolute left-4 top-1/2 -translate-y-1/2" size={16} style={{ color: 'var(--text-dim)' }} />
+                <input required type="text" className="input-saanam pl-11" placeholder="Your name" value={formData.customerName} onChange={e => setFormData({...formData, customerName: e.target.value})} />
               </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 block px-1">Phone</label>
-                  <div className="relative">
-                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                    <input required type="tel" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-sm font-bold outline-none focus:border-emerald-500/30 transition-all text-slate-900" placeholder="+91 ..." value={formData.customerPhone} onChange={e => setFormData({...formData, customerPhone: e.target.value})} />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 block px-1">Email</label>
-                  <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                    <input type="email" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-sm font-bold outline-none focus:border-emerald-500/30 transition-all text-slate-900" placeholder="optional@email.com" value={formData.customerEmail} onChange={e => setFormData({...formData, customerEmail: e.target.value})} />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 block px-1">Guests</label>
-                  <div className="relative">
-                    <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                    <select className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-sm font-bold outline-none appearance-none" value={formData.partySize} onChange={e => setFormData({...formData, partySize: e.target.value})}>
-                       {[1,2,3,4,5,6,8,10].map(n => <option key={n} value={n}>{n} Persons</option>)}
-                    </select>
-                  </div>
-                </div>
-                <div>
-                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 block px-1">Date</label>
-                   <div className="relative">
-                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                    <input required type="date" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-sm font-bold outline-none" value={formData.bookingDate} onChange={e => setFormData({...formData, bookingDate: e.target.value})} />
-                  </div>
-                </div>
-              </div>
-
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 block px-1">Special Requests</label>
+                <label className="text-[10px] font-bold uppercase tracking-[0.2em] mb-2 block px-0.5" style={{ color: 'var(--text-dim)' }}>Phone</label>
                 <div className="relative">
-                   <MessageSquare className="absolute left-4 top-4 text-slate-300" size={18} />
-                   <textarea rows={3} className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-sm font-bold outline-none focus:border-emerald-500/30 transition-all" placeholder="Birthdays, Allergies, Table preference..." value={formData.specialRequests} onChange={e => setFormData({...formData, specialRequests: e.target.value})} />
+                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2" size={16} style={{ color: 'var(--text-dim)' }} />
+                  <input required type="tel" className="input-saanam pl-11" placeholder="+91..." value={formData.customerPhone} onChange={e => setFormData({...formData, customerPhone: e.target.value})} />
                 </div>
+              </div>
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-[0.2em] mb-2 block px-0.5" style={{ color: 'var(--text-dim)' }}>Email</label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2" size={16} style={{ color: 'var(--text-dim)' }} />
+                  <input type="email" className="input-saanam pl-11" placeholder="Optional" value={formData.customerEmail} onChange={e => setFormData({...formData, customerEmail: e.target.value})} />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-[0.2em] mb-2 block px-0.5" style={{ color: 'var(--text-dim)' }}>Guests</label>
+                <div className="relative">
+                  <Users className="absolute left-4 top-1/2 -translate-y-1/2" size={16} style={{ color: 'var(--text-dim)' }} />
+                  <select className="input-saanam pl-11 appearance-none" value={formData.partySize} onChange={e => setFormData({...formData, partySize: e.target.value})}>
+                    {[1,2,3,4,5,6,8,10].map(n => <option key={n} value={n}>{n} Persons</option>)}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-[0.2em] mb-2 block px-0.5" style={{ color: 'var(--text-dim)' }}>Date</label>
+                <div className="relative">
+                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2" size={16} style={{ color: 'var(--text-dim)' }} />
+                  <input required type="date" className="input-saanam pl-11" value={formData.bookingDate} onChange={e => setFormData({...formData, bookingDate: e.target.value})} />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-[0.2em] mb-2 block px-0.5" style={{ color: 'var(--text-dim)' }}>Special Requests</label>
+              <div className="relative">
+                <MessageSquare className="absolute left-4 top-4" size={16} style={{ color: 'var(--text-dim)' }} />
+                <textarea rows={3} className="input-saanam pl-11 resize-none" placeholder="Allergies, birthdays, seating preference..." value={formData.specialRequests} onChange={e => setFormData({...formData, specialRequests: e.target.value})} />
               </div>
             </div>
 
             <button 
               type="submit" 
               disabled={loading}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-5 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-2xl shadow-emerald-600/20 transition-all active:scale-[0.98] disabled:opacity-50"
+              className="btn-saanam w-full mt-2"
+              style={{ padding: '16px' }}
             >
-              {loading ? "Syncing..." : "Confirm Reservation"}
+              {loading ? "Processing..." : "Confirm Reservation"}
             </button>
           </form>
         </div>
-
       </div>
     </div>
   );

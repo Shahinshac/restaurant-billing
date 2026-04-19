@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import AppLayout from "@/components/AppLayout";
@@ -11,14 +11,21 @@ const inter = Inter({
   weight: ['400', '500', '600', '700', '800', '900'],
 });
 
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+  display: "swap",
+  weight: ['400', '500', '600', '700', '800', '900'],
+});
+
 export const metadata: Metadata = {
-  title: "RestoPro Cloud — High Performance Restaurant Management",
-  description: "Enterprise-grade POS, Kitchen (KDS), and Analytics suite for modern restaurant operations.",
+  title: "Saanam — Premium Restaurant Management Suite",
+  description: "Cinematic POS, Kitchen Display, Analytics & Real-time Operations for modern restaurants.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "RestoPro Console",
+    title: "Saanam",
   },
 };
 
@@ -28,28 +35,28 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} scroll-smooth`}>
-      <body className="antialiased bg-[var(--background)] text-[var(--text-main)] font-sans selection:bg-emerald-100 selection:text-emerald-900">
+    <html lang="en" className={`${inter.variable} ${outfit.variable} scroll-smooth`}>
+      <body className="antialiased font-sans">
         <AppLayout>{children}</AppLayout>
         <Toaster
           position="bottom-right"
           toastOptions={{
-            duration: 4000,
+            duration: 3500,
             style: {
-              background: "#0f172a",
-              color: "#fff",
-              borderRadius: "16px",
-              padding: "16px 24px",
+              background: "#18181b",
+              color: "#fafafa",
+              borderRadius: "14px",
+              padding: "14px 20px",
               fontSize: "13px",
               fontWeight: "600",
-              border: "1px solid rgba(255,255,255,0.1)",
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.2)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              boxShadow: "0 20px 40px rgba(0, 0, 0, 0.5)",
             },
             success: { 
-              iconTheme: { primary: "#10b981", secondary: "#fff" },
+              iconTheme: { primary: "#f97316", secondary: "#fff" },
             },
             error: { 
-              iconTheme: { primary: "#f43f5e", secondary: "#fff" },
+              iconTheme: { primary: "#ef4444", secondary: "#fff" },
             },
           }}
         />

@@ -14,7 +14,9 @@ import {
   ArrowRight,
   Filter,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Flame,
+  Sparkles
 } from "lucide-react";
 
 export default function POSPage() {
@@ -46,7 +48,7 @@ export default function POSPage() {
       setMenu(items.data.data);
       setTables(tablesRes.data.data);
     } catch (error) {
-      toast.error("Failed to sync production data");
+      toast.error("Failed to load menu data");
     } finally {
       setLoading(false);
     }
@@ -62,12 +64,11 @@ export default function POSPage() {
     setCart(prev => {
       const existing = prev.find(i => i.id === item.id);
       if (existing) {
-        toast.success(`Increased ${item.name} quantity`, { duration: 1000, position: 'bottom-center' });
         return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
       }
-      toast.success(`Added ${item.name} to ticket`, { duration: 1000, position: 'bottom-center' });
       return [...prev, { ...item, quantity: 1 }];
     });
+    toast.success(`${item.name} added`, { duration: 1000, position: 'bottom-center' });
   };
 
   const updateQuantity = (id: string, delta: number) => {
@@ -85,9 +86,9 @@ export default function POSPage() {
   const total = subtotal + gst;
 
   const handlePlaceOrder = async () => {
-    if (cart.length === 0) return toast.error("Your ticket is currently empty");
-    if (!isTakeaway && !selectedTableId) return toast.error("Please assign a table for this order");
-    if (isTakeaway && !customerDetails.name) return toast.error("Guest name is required for takeaway");
+    if (cart.length === 0) return toast.error("Cart is empty");
+    if (!isTakeaway && !selectedTableId) return toast.error("Please select a table");
+    if (isTakeaway && !customerDetails.name) return toast.error("Guest name required for takeaway");
 
     try {
       const payload = {
@@ -105,11 +106,13 @@ export default function POSPage() {
 
       await api.post('/orders', payload);
       toast.custom((t) => (
-        <div className="bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 animate-in">
-          <CheckCircle2 className="text-emerald-400" />
+        <div className="flex items-center gap-3 px-5 py-4 rounded-2xl animate-in"
+          style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}
+        >
+          <CheckCircle2 style={{ color: 'var(--success)' }} size={20} />
           <div className="flex flex-col">
-            <span className="font-bold text-sm">Order Synchronized</span>
-            <span className="text-[11px] text-slate-400">Sent to Kitchen KDS successfully</span>
+            <span className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>Order Fired!</span>
+            <span className="text-[11px]" style={{ color: 'var(--text-dim)' }}>Sent to kitchen successfully</span>
           </div>
         </div>
       ));
@@ -118,76 +121,103 @@ export default function POSPage() {
       setCustomerDetails({ name: '', phone: '' });
       fetchInitialData();
     } catch (error) {
-      toast.error("Network disruption: Failed to sync order");
+      toast.error("Failed to place order");
     }
   };
 
   if (loading) return (
-    <div className="p-12 flex flex-col items-center justify-center min-h-screen bg-slate-50">
-      <div className="w-12 h-12 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin mb-6"></div>
-      <p className="text-slate-400 font-bold text-xs uppercase tracking-[0.3em]">Initializing POS Terminal...</p>
+    <div className="flex flex-col items-center justify-center min-h-screen" style={{ background: 'var(--bg-deep)' }}>
+      <div className="w-12 h-12 border-[3px] rounded-full animate-spin mb-5"
+        style={{ borderColor: 'var(--bg-elevated)', borderTopColor: 'var(--accent)' }}
+      ></div>
+      <p className="font-bold text-[10px] uppercase tracking-[0.3em]" style={{ color: 'var(--text-dim)' }}>Initializing POS...</p>
     </div>
   );
 
   return (
-    <div className="flex h-screen bg-[#f1f5f9] overflow-hidden animate-in">
-      {/* Product Discovery Area */}
+    <div className="flex h-screen overflow-hidden animate-in" style={{ background: 'var(--bg-deep)' }}>
+      {/* ═══════ Product Grid ═══════ */}
       <div className="flex-1 flex flex-col min-w-0">
         
-        {/* Top bar with contextual info and actions */}
-        <header className="px-8 py-6 bg-white border-b border-slate-200">
-          <div className="flex justify-between items-center mb-8">
+        {/* Top Bar */}
+        <header className="px-6 py-5 shrink-0" style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)' }}>
+          <div className="flex justify-between items-center mb-5">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">POS Terminal • Online</p>
+                <span className="w-2 h-2 rounded-full" style={{ background: 'var(--success)' }}></span>
+                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>POS Terminal • Online</p>
               </div>
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight">Product Register</h1>
+              <h1 className="text-xl font-black tracking-tight" style={{ fontFamily: 'var(--font-outfit), sans-serif', color: 'var(--text-primary)' }}>
+                Menu Register
+              </h1>
             </div>
 
-            <div className="flex items-center gap-4">
-               {/* Mode Switcher */}
-               <div className="bg-slate-100 p-1.5 rounded-2xl flex">
-                  <button 
-                    onClick={() => setIsTakeaway(false)}
-                    className={`flex items-center gap-2 px-6 py-2 rounded-[var(--radius-md)] text-xs font-bold transition-all ${!isTakeaway ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                  >
-                    Dine-In
-                  </button>
-                  <button 
-                    onClick={() => setIsTakeaway(true)}
-                    className={`flex items-center gap-2 px-6 py-2 rounded-[var(--radius-md)] text-xs font-bold transition-all ${isTakeaway ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' : 'text-slate-400 hover:text-slate-600'}`}
-                  >
-                    Takeaway
-                  </button>
-               </div>
+            <div className="flex items-center gap-3">
+              {/* Mode Switcher */}
+              <div className="p-1 rounded-xl flex" style={{ background: 'var(--bg-elevated)' }}>
+                <button 
+                  onClick={() => setIsTakeaway(false)}
+                  className="flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-bold transition-all"
+                  style={!isTakeaway ? {
+                    background: 'var(--bg-surface)',
+                    color: 'var(--text-primary)',
+                    boxShadow: 'var(--shadow-sm)',
+                  } : {
+                    color: 'var(--text-dim)',
+                  }}
+                >
+                  Dine-In
+                </button>
+                <button 
+                  onClick={() => setIsTakeaway(true)}
+                  className="flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-bold transition-all"
+                  style={isTakeaway ? {
+                    background: 'linear-gradient(135deg, var(--accent), #ea580c)',
+                    color: '#fff',
+                    boxShadow: '0 4px 16px rgba(249,115,22,0.3)',
+                  } : {
+                    color: 'var(--text-dim)',
+                  }}
+                >
+                  Takeaway
+                </button>
+              </div>
 
-               {/* Discovery Search */}
-               <div className="relative group">
-                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-emerald-600" size={16} />
-                 <input 
-                   type="text" 
-                   placeholder="Discover products..." 
-                   className="pl-12 pr-6 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:bg-white focus:border-emerald-500/30 focus:ring-[6px] focus:ring-emerald-500/5 transition-all text-sm font-medium w-64 xl:w-80"
-                   value={searchQuery}
-                   onChange={(e) => setSearchQuery(e.target.value)}
-                 />
-               </div>
+              {/* Search */}
+              <div className="relative group">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors" size={16} style={{ color: 'var(--text-dim)' }} />
+                <input 
+                  type="text" 
+                  placeholder="Search menu..." 
+                  className="input-saanam pl-10 w-56 xl:w-72"
+                  style={{ padding: '10px 16px 10px 38px', fontSize: '13px' }}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
             </div>
           </div>
 
-          {/* Filtering System */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-slate-400 text-xs font-bold pr-4 border-r border-slate-100">
-               <Filter size={14} />
-               <span>FILTER</span>
+          {/* Categories */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 pr-3 text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)', borderRight: '1px solid var(--border)' }}>
+              <Filter size={12} />
+              <span>Filter</span>
             </div>
             <div className="flex gap-2 flex-1 overflow-x-auto no-scrollbar">
               {categories.map(cat => (
                 <button 
                   key={cat} 
                   onClick={() => setActiveCategory(cat)}
-                  className={`px-5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeCategory === cat ? 'bg-slate-900 text-white shadow-lg' : 'bg-slate-50 text-slate-500 hover:bg-slate-100 border border-transparent'}`}
+                  className="px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap"
+                  style={activeCategory === cat ? {
+                    background: 'var(--text-primary)',
+                    color: 'var(--bg-deep)',
+                  } : {
+                    background: 'var(--bg-elevated)',
+                    color: 'var(--text-dim)',
+                    border: '1px solid transparent',
+                  }}
                 >
                   {cat}
                 </button>
@@ -196,169 +226,199 @@ export default function POSPage() {
           </div>
         </header>
 
-        {/* Dynamic Items Grid */}
-        <div className="flex-1 p-8 overflow-y-auto modern-scrollbar grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xxl:grid-cols-5 gap-6 content-start">
+        {/* Menu Grid */}
+        <div className="flex-1 p-6 overflow-y-auto custom-scroll grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 content-start">
           {filteredMenu.map(item => (
             <div 
               key={item.id} 
               onClick={() => addToCart(item)}
-              className="premium-card group p-5 cursor-pointer flex flex-col hover:-translate-y-2"
+              className="glow-card group p-5 cursor-pointer flex flex-col"
             >
-              <div className="relative aspect-square mb-5 bg-slate-50 rounded-2xl overflow-hidden flex items-center justify-center">
-                 {/* Item visual placeholder with category icon based text */}
-                 <div className="text-4xl filter grayscale group-hover:grayscale-0 transition-all duration-500 transform group-hover:scale-110">
-                    {item.category.includes('Drink') ? '🥤' : item.category.includes('Burger') ? '🍔' : item.category.includes('Pizza') ? '🍕' : item.category.includes('Dessert') ? '🍰' : '🍲'}
-                 </div>
-                 <div className={`absolute top-3 left-3 w-3 h-3 rounded-full border-2 border-white shadow-sm ${item.isVeg ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
+              {/* Thumbnail */}
+              <div className="relative aspect-[4/3] mb-4 rounded-xl overflow-hidden flex items-center justify-center"
+                style={{ background: 'var(--bg-elevated)' }}
+              >
+                <div className="text-4xl filter grayscale group-hover:grayscale-0 transition-all duration-500 transform group-hover:scale-110">
+                  {item.category?.includes('Drink') ? '🥤' : item.category?.includes('Burger') ? '🍔' : item.category?.includes('Pizza') ? '🍕' : item.category?.includes('Dessert') ? '🍰' : '🍲'}
+                </div>
+                <div className={`absolute top-2.5 left-2.5 w-3 h-3 rounded-full border-2 ${item.isVeg ? 'bg-emerald-500 border-emerald-400/30' : 'bg-rose-500 border-rose-400/30'}`}></div>
               </div>
               
               <div className="flex-1">
-                <div className="flex justify-between items-start mb-2">
-                   <h3 className="text-sm font-bold text-slate-900 leading-snug group-hover:text-emerald-600 transition-colors line-clamp-2">{item.name}</h3>
-                </div>
-                <p className="text-[11px] text-slate-400 font-medium mb-4 line-clamp-2 leading-relaxed">{item.description || 'No description provided for this item.'}</p>
+                <h3 className="text-sm font-bold leading-snug transition-colors line-clamp-2 mb-1"
+                  style={{ color: 'var(--text-primary)' }}
+                >{item.name}</h3>
+                <p className="text-[11px] font-medium mb-3 line-clamp-2 leading-relaxed" style={{ color: 'var(--text-dim)' }}>
+                  {item.description || 'Authentic preparation.'}
+                </p>
               </div>
               
-              <div className="pt-4 border-t border-slate-50 flex justify-between items-center mt-auto">
-                <span className="text-base font-black text-slate-900 tracking-tight">₹{item.price}</span>
-                <div className="w-10 h-10 bg-slate-50 group-hover:bg-emerald-600 group-hover:text-white rounded-xl flex items-center justify-center transition-all shadow-sm group-hover:shadow-emerald-200">
-                  <Plus size={18} strokeWidth={2.5} />
+              <div className="pt-3 flex justify-between items-center mt-auto" style={{ borderTop: '1px solid var(--border)' }}>
+                <span className="text-base font-black tracking-tight" style={{ color: 'var(--text-primary)' }}>₹{item.price}</span>
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+                  style={{ background: 'var(--bg-elevated)', color: 'var(--text-dim)' }}
+                >
+                  <Plus size={16} strokeWidth={2.5} />
                 </div>
               </div>
             </div>
           ))}
           {filteredMenu.length === 0 && (
-             <div className="col-span-full py-32 flex flex-col items-center justify-center text-slate-400">
-                <AlertCircle size={48} strokeWidth={1.5} className="mb-4 text-slate-200" />
-                <p className="text-sm font-bold uppercase tracking-widest text-slate-300">No products match your search</p>
-             </div>
+            <div className="col-span-full py-28 flex flex-col items-center justify-center">
+              <AlertCircle size={44} strokeWidth={1.5} className="mb-3" style={{ color: 'var(--text-dim)' }} />
+              <p className="text-sm font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>No items found</p>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Execution Panel (Cart) */}
-      <div className="w-[380px] bg-white border-l border-slate-200 flex flex-col shrink-0">
-        <div className="p-8 border-b border-slate-50">
+      {/* ═══════ Cart Panel ═══════ */}
+      <div className="w-[360px] flex flex-col shrink-0 hidden md:flex"
+        style={{ background: 'var(--bg-surface)', borderLeft: '1px solid var(--border)' }}
+      >
+        {/* Cart Header */}
+        <div className="p-6" style={{ borderBottom: '1px solid var(--border)' }}>
           <div className="flex justify-between items-center mb-1">
-             <h2 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-               Active Ticket
-               {cart.length > 0 && <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 text-[10px] flex items-center justify-center transform scale-90">{cart.length}</span>}
-             </h2>
-             <div className="p-2 bg-slate-50 rounded-lg text-slate-400">
-               <Receipt size={20} />
-             </div>
+            <h2 className="text-lg font-bold tracking-tight flex items-center gap-2.5" style={{ color: 'var(--text-primary)' }}>
+              Active Order
+              {cart.length > 0 && (
+                <span className="w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center"
+                  style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}
+                >{cart.length}</span>
+              )}
+            </h2>
+            <div className="p-2 rounded-lg" style={{ background: 'var(--bg-elevated)', color: 'var(--text-dim)' }}>
+              <Receipt size={18} />
+            </div>
           </div>
-          <p className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.2em]">Execution Draft Queue</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--text-dim)' }}>Order Draft</p>
         </div>
 
-        {/* Customer / Table Assignment */}
-        <div className="px-8 py-6 bg-slate-50/50 border-b border-slate-100">
-           {isTakeaway ? (
-              <div className="space-y-3">
-                 <div className="group flex items-center gap-3 bg-white p-4 rounded-2xl border border-slate-100 focus-within:border-emerald-500/20 focus-within:ring-[6px] focus-within:ring-emerald-500/5 transition-all">
-                    <User size={16} className="text-slate-300 group-focus-within:text-emerald-500" />
-                    <input 
-                      type="text" 
-                      placeholder="Guest Name"
-                      className="flex-1 outline-none text-xs font-bold text-slate-900 placeholder:text-slate-300 bg-transparent"
-                      value={customerDetails.name}
-                      onChange={(e) => setCustomerDetails({...customerDetails, name: e.target.value})}
-                    />
-                 </div>
-                 <div className="group flex items-center gap-3 bg-white p-4 rounded-2xl border border-slate-100 focus-within:border-emerald-500/20 focus-within:ring-[6px] focus-within:ring-emerald-500/5 transition-all">
-                    <Phone size={16} className="text-slate-300 group-focus-within:text-emerald-500" />
-                    <input 
-                      type="tel" 
-                      placeholder="Contact Number (Optional)"
-                      className="flex-1 outline-none text-xs font-bold text-slate-900 placeholder:text-slate-300 bg-transparent"
-                      value={customerDetails.phone}
-                      onChange={(e) => setCustomerDetails({...customerDetails, phone: e.target.value})}
-                    />
-                 </div>
+        {/* Table / Customer Selection */}
+        <div className="px-6 py-5" style={{ background: 'var(--bg-elevated)', borderBottom: '1px solid var(--border)' }}>
+          {isTakeaway ? (
+            <div className="space-y-2.5">
+              <div className="group flex items-center gap-3 p-3.5 rounded-xl transition-all"
+                style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
+                <User size={15} style={{ color: 'var(--text-dim)' }} />
+                <input 
+                  type="text" 
+                  placeholder="Guest Name"
+                  className="flex-1 outline-none text-xs font-bold bg-transparent"
+                  style={{ color: 'var(--text-primary)' }}
+                  value={customerDetails.name}
+                  onChange={(e) => setCustomerDetails({...customerDetails, name: e.target.value})}
+                />
               </div>
-           ) : (
-              <div className="grid grid-cols-5 gap-3">
-                {tables.map(table => {
-                   const isOccupied = table.status === 'OCCUPIED' || table.status === 'RESERVED';
-                   return (
-                     <button 
-                      key={table.id}
-                      onClick={() => setSelectedTableId(table.id)}
-                      className={`relative aspect-square rounded-xl border-2 flex flex-col items-center justify-center transition-all ${
-                        selectedTableId === table.id 
-                          ? 'bg-slate-900 border-slate-900 text-white shadow-xl shadow-slate-200' 
-                          : isOccupied
-                            ? 'bg-rose-50 border-rose-100 text-rose-600'
-                            : 'bg-white border-transparent text-slate-400 hover:border-slate-200 hover:text-slate-600'
-                      }`}
-                     >
-                       <span className="text-[11px] font-black tracking-tight">{table.tableNumber}</span>
-                       <div className={`absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full ${isOccupied ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500'}`}></div>
-                     </button>
-                   );
-                })}
+              <div className="group flex items-center gap-3 p-3.5 rounded-xl transition-all"
+                style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
+                <Phone size={15} style={{ color: 'var(--text-dim)' }} />
+                <input 
+                  type="tel" 
+                  placeholder="Phone (Optional)"
+                  className="flex-1 outline-none text-xs font-bold bg-transparent"
+                  style={{ color: 'var(--text-primary)' }}
+                  value={customerDetails.phone}
+                  onChange={(e) => setCustomerDetails({...customerDetails, phone: e.target.value})}
+                />
               </div>
-           )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-5 gap-2">
+              {tables.map(table => {
+                const isOccupied = table.status === 'OCCUPIED' || table.status === 'RESERVED';
+                return (
+                  <button 
+                    key={table.id}
+                    onClick={() => setSelectedTableId(table.id)}
+                    className="relative aspect-square rounded-xl flex flex-col items-center justify-center transition-all"
+                    style={selectedTableId === table.id ? {
+                      background: 'linear-gradient(135deg, var(--accent), #ea580c)',
+                      color: '#fff',
+                      boxShadow: '0 4px 20px rgba(249,115,22,0.35)',
+                    } : isOccupied ? {
+                      background: 'var(--danger-soft)',
+                      color: 'var(--danger)',
+                      border: '1px solid rgba(239,68,68,0.2)',
+                    } : {
+                      background: 'var(--bg-surface)',
+                      color: 'var(--text-dim)',
+                      border: '1px solid var(--border)',
+                    }}
+                  >
+                    <span className="text-[11px] font-black tracking-tight">{table.tableNumber}</span>
+                    <div className={`absolute top-1 right-1 w-1.5 h-1.5 rounded-full ${isOccupied ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`}></div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {/* Live Ticket Display */}
-        <div className="flex-1 overflow-y-auto p-8 space-y-6 modern-scrollbar">
+        {/* Cart Items */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scroll">
           {cart.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-slate-200 py-12">
-               <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6">
-                <ShoppingBag size={40} strokeWidth={1} />
-               </div>
-               <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-300">Ticket is empty</p>
+            <div className="h-full flex flex-col items-center justify-center py-10">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: 'var(--bg-elevated)' }}>
+                <ShoppingBag size={32} strokeWidth={1} style={{ color: 'var(--text-dim)' }} />
+              </div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.3em]" style={{ color: 'var(--text-dim)' }}>Cart is empty</p>
             </div>
           ) : (
             cart.map(item => (
               <div key={item.id} className="flex justify-between items-center group animate-in">
-                 <div className="flex-1 pr-6 flex items-start gap-3">
-                    <div className="mt-1 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></div>
-                    <div>
-                      <h4 className="font-bold text-slate-900 text-xs leading-tight uppercase tracking-tight group-hover:text-emerald-600 transition-colors">{item.name}</h4>
-                      <p className="text-[11px] font-bold text-slate-400 mt-1">₹{item.price}</p>
-                    </div>
-                 </div>
-                 <div className="flex items-center gap-4 bg-slate-50 p-2 rounded-xl border border-slate-100">
-                    <button onClick={() => updateQuantity(item.id, -1)} className="w-8 h-8 rounded-lg bg-white text-slate-400 hover:text-rose-600 shadow-sm flex items-center justify-center transition-all">
-                       <Minus size={14} strokeWidth={3} />
-                    </button>
-                    <span className="text-xs font-black text-slate-900 min-w-[12px] text-center">{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.id, 1)} className="w-8 h-8 rounded-lg bg-white text-slate-400 hover:text-emerald-600 shadow-sm flex items-center justify-center transition-all">
-                       <Plus size={14} strokeWidth={3} />
-                    </button>
-                 </div>
+                <div className="flex-1 pr-4 flex items-start gap-2.5">
+                  <div className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: 'var(--accent)' }}></div>
+                  <div>
+                    <h4 className="font-bold text-xs leading-tight uppercase tracking-tight transition-colors" style={{ color: 'var(--text-primary)' }}>{item.name}</h4>
+                    <p className="text-[11px] font-bold mt-1" style={{ color: 'var(--text-dim)' }}>₹{item.price}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-1.5 rounded-xl" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+                  <button onClick={() => updateQuantity(item.id, -1)} className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:opacity-80"
+                    style={{ background: 'var(--bg-surface)', color: 'var(--danger)' }}
+                  >
+                    <Minus size={12} strokeWidth={3} />
+                  </button>
+                  <span className="text-xs font-black min-w-[12px] text-center" style={{ color: 'var(--text-primary)' }}>{item.quantity}</span>
+                  <button onClick={() => updateQuantity(item.id, 1)} className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:opacity-80"
+                    style={{ background: 'var(--bg-surface)', color: 'var(--success)' }}
+                  >
+                    <Plus size={12} strokeWidth={3} />
+                  </button>
+                </div>
               </div>
             ))
           )}
         </div>
 
-        {/* Financial Overview & Submission */}
-        <div className="p-8 bg-white border-t border-slate-100 shadow-[0_-10px_30px_rgba(0,0,0,0.02)]">
-           <div className="space-y-2.5 mb-8">
-              <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-widest">
-                 <span>Subtotal</span>
-                 <span className="text-slate-900">₹{subtotal.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-widest">
-                 <span>Tax (GST 5%)</span>
-                 <span className="text-slate-900">₹{gst.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-end pt-4">
-                 <span className="text-sm font-black text-slate-900 uppercase tracking-[0.2em]">Total Pay</span>
-                 <span className="text-3xl font-black text-slate-900 tracking-tighter">₹{total.toLocaleString()}</span>
-              </div>
-           </div>
+        {/* Totals & CTA */}
+        <div className="p-6 shrink-0" style={{ borderTop: '1px solid var(--border)' }}>
+          <div className="space-y-2 mb-6">
+            <div className="flex justify-between text-xs font-bold uppercase tracking-widest">
+              <span style={{ color: 'var(--text-dim)' }}>Subtotal</span>
+              <span style={{ color: 'var(--text-primary)' }}>₹{subtotal.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-xs font-bold uppercase tracking-widest">
+              <span style={{ color: 'var(--text-dim)' }}>GST 5%</span>
+              <span style={{ color: 'var(--text-primary)' }}>₹{gst.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between items-end pt-3" style={{ borderTop: '1px solid var(--border)' }}>
+              <span className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: 'var(--text-secondary)' }}>Total</span>
+              <span className="text-2xl font-black tracking-tighter" style={{ color: 'var(--text-primary)' }}>₹{total.toLocaleString()}</span>
+            </div>
+          </div>
 
-           <button 
-             onClick={handlePlaceOrder}
-             disabled={cart.length === 0}
-             className="w-full bg-slate-900 hover:bg-black disabled:bg-slate-200 text-white py-5 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-2xl active:scale-[0.98]"
-           >
-             Initialize Production
-             <ArrowRight size={16} />
-           </button>
+          <button 
+            onClick={handlePlaceOrder}
+            disabled={cart.length === 0}
+            className="btn-saanam w-full text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2.5"
+            style={{ padding: '18px 28px' }}
+          >
+            <Flame size={16} />
+            Fire Order
+            <ArrowRight size={14} />
+          </button>
         </div>
       </div>
     </div>

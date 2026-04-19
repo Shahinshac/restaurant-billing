@@ -33,9 +33,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[var(--surface)]">
+    <div className="flex h-screen overflow-hidden" style={{ background: 'var(--bg-deep)' }}>
       <Navigation />
-      <main className="flex-1 h-screen overflow-y-auto pb-16 md:pb-0 relative scroll-smooth">
+      <main className="flex-1 h-screen overflow-y-auto pb-20 md:pb-0 relative scroll-smooth custom-scroll">
         {children}
       </main>
     </div>
