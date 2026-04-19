@@ -16,7 +16,9 @@ export default function LoginPage() {
     setLoading(true);
 
     setTimeout(() => {
-      if (username === "shahinsha" && password === "262007") {
+      const isCorrect = username.trim().toLowerCase() === "shahinsha" && password.trim() === "262007";
+      
+      if (isCorrect) {
         localStorage.setItem("isLoggedIn", "true");
         localStorage.setItem("user", JSON.stringify({ name: "Shahinsha", role: "admin" }));
         toast.success("Welcome back, Shahinsha");
