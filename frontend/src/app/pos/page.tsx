@@ -224,6 +224,16 @@ export default function POSTerminal() {
     }
   };
 
+  const filteredMenu = activeCategory === "All" ? menu : menu.filter(m => m.category === activeCategory);
+  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const gst = subtotal * 0.05;
+  const total = subtotal + gst;
+
+  const handlePrint = () => {
+    if (cart.length === 0) return toast.error("Nothing to print");
+    window.print();
+  };
+
   if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-screen" style={{ background: 'var(--bg-deep)' }}>
       <div className="w-12 h-12 border-[3px] rounded-full animate-spin mb-5"
