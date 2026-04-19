@@ -33,6 +33,7 @@ export default function POSTerminal() {
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [customerDetails, setCustomerDetails] = useState({ name: '', phone: '' });
   const [heldOrder, setHeldOrder] = useState<any>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('pos_held_order');
@@ -114,10 +115,12 @@ export default function POSTerminal() {
   };
 
   const handlePlaceOrder = async () => {
+    if (isSubmitting) return;
     if (cart.length === 0) return toast.error("Cart is empty");
     if (!isTakeaway && !selectedTableId) return toast.error("Please select a table");
     if (isTakeaway && !customerDetails.name) return toast.error("Guest name required for takeaway");
 
+    setIsSubmitting(true);
     try {
       const payload = {
         tableId: isTakeaway ? null : selectedTableId,
@@ -150,6 +153,8 @@ export default function POSTerminal() {
       fetchInitialData();
     } catch (error) {
       toast.error("Failed to place order");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -504,7 +509,7 @@ export default function POSTerminal() {
               </button>
               <button 
                 onClick={handlePlaceOrder}
-                disabled={cart.length === 0}
+                disabled={cart.length === 0 || isSubmitting}
                 className="btn-saanam col-span-2 text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-2.5"
                 style={{ padding: '18px 28px' }}
               >
