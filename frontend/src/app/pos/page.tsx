@@ -422,7 +422,8 @@ export default function POSTerminal() {
                         border: '1px solid var(--border)',
                       }}
                     >
-                      <span className="text-[11px] font-black tracking-tight">{table.tableNumber}</span>
+                      <span className="text-[11px] font-black tracking-tight leading-none mb-0.5">T{table.tableNumber}</span>
+                      <span className="text-[8px] font-bold uppercase tracking-widest opacity-60">{table.capacity} PAX</span>
                       <div className={`absolute top-1 right-1 w-1.5 h-1.5 rounded-full ${isOccupied ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`}></div>
                     </button>
                   );

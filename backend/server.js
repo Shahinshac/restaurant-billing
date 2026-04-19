@@ -54,14 +54,15 @@ app.set('io', io);
 const menuRouter = require('./routes/menu');
 const orderRouter = require('./routes/orders');
 const tableRouter = require('./routes/tables');
-const queueRouter = require('./routes/queue');
 const bookingRouter = require('./routes/bookings');
+const waitlistRouter = require('./routes/waitlist');
 const analyticsRoutes = require('./routes/analytics');
 
 app.use('/api/menu', menuRouter);
 app.use('/api/orders', orderRouter);
 app.use('/api/tables', tableRouter);
-app.use('/api/queue', queueRouter);
+app.use('/api/waitlist', waitlistRouter);
+
 app.use('/api/bookings', bookingRouter);
 app.use('/api/analytics', analyticsRoutes);
 

@@ -42,7 +42,7 @@ export function Navigation() {
     { href: "/tables", label: "Tables", icon: Grid },
     { href: "/kds", label: "Kitchen", icon: ChefHat },
     { href: "/status", label: "Status Board", icon: Monitor },
-    { href: "/queue", label: "Queue", icon: Users },
+    { href: "/waitlist", label: "Waitlist", icon: Users },
   ];
 
   const adminLinks = [

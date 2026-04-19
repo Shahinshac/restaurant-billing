@@ -30,7 +30,7 @@ model Table {
   posY        Int       @default(0)
 
   orders   Order[]   @relation("TableAllOrders")
-  queues   Queue[]
+  waitlist Waitlist[]
   bookings Booking[]
 }
 
@@ -50,13 +50,13 @@ model Booking {
   createdAt       DateTime @default(now())
 }
 
-model Queue {
+model Waitlist {
   id              String   @id @default(uuid())
   customerName    String
   peopleCount     Int
   status          String   @default("WAITING") // WAITING, READY, ASSIGNED
   qrCode          String   @default("")
-  queueNumber     Int      @default(autoincrement())
+  waitlistNumber  Int      @default(autoincrement())
   estimatedWait   Int      @default(0)
   
   assignedTableId String?

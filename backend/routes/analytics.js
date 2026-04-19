@@ -17,7 +17,7 @@ router.get('/summary', async (req, res) => {
       prisma.order.count({ where: { createdAt: { gte: today } } }),
       prisma.order.count(),
       prisma.table.count({ where: { status: 'OCCUPIED' } }),
-      prisma.queue.count({ where: { status: 'WAITING' } })
+      prisma.waitlist.count({ where: { status: 'WAITING' } })
     ]);
 
     const todayOrders = await prisma.order.findMany({
@@ -56,7 +56,7 @@ router.get('/summary', async (req, res) => {
         .sort()
         .map(d => ({ _id: d, revenue: revenueByDayMap[d].revenue, orders: revenueByDayMap[d].orders }));
 
-    const waitQueues = await prisma.queue.findMany({
+    const waitQueues = await prisma.waitlist.findMany({
         where: { status: { in: ['ASSIGNED', 'WAITING'] } },
         select: { estimatedWait: true }
     });
