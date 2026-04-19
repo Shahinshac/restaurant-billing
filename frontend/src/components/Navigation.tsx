@@ -17,7 +17,8 @@ import {
   Sun,
   Moon,
   Map,
-  Monitor
+  Monitor,
+  FileText
 } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -48,6 +49,7 @@ export function Navigation() {
     { href: "/admin/menu", label: "Menu Manager", icon: Flame },
     { href: "/admin/tables", label: "Floor Layout", icon: Map },
     { href: "/admin/qr", label: "QR Manager", icon: QrCode },
+    { href: "/invoices", label: "Invoices", icon: FileText },
   ];
 
   return (

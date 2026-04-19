@@ -3,13 +3,15 @@
 import { useEffect, useState, useRef } from "react";
 import api from "@/lib/api";
 import { socket } from "@/lib/socket";
-import { CheckCircle2, Clock, Flame } from "lucide-react";
+import { CheckCircle2, Clock, Flame, Monitor } from "lucide-react";
 
 export default function StatusBoard() {
   const [preparingOrders, setPreparingOrders] = useState<any[]>([]);
   const [readyOrders, setReadyOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [time, setTime] = useState(new Date());
+  const [isOverlayVisible, setIsOverlayVisible] = useState(true);
+  const audioContextRef = useRef<AudioContext | null>(null);
   
   // Track IDs of orders already notified to prevent duplicate beeps
   const revealedIdsRef = useRef<Set<string>>(new Set());
@@ -30,12 +32,34 @@ export default function StatusBoard() {
     };
   }, []);
 
+  const handleStart = async () => {
+    setIsOverlayVisible(false);
+    // Initialize AudioContext on user gesture
+    try {
+      const AudioContextClass = (window.AudioContext || (window as any).webkitAudioContext);
+      if (AudioContextClass) {
+        audioContextRef.current = new AudioContextClass();
+        await audioContextRef.current.resume();
+      }
+    } catch (e) {
+      console.error("Audio init failed", e);
+    }
+  };
+
   const playNotificationSound = () => {
     try {
-      const AudioContext = (window.AudioContext || (window as any).webkitAudioContext);
-      if (!AudioContext) return;
+      let context = audioContextRef.current;
       
-      const context = new AudioContext();
+      if (!context) {
+        const AudioContextClass = (window.AudioContext || (window as any).webkitAudioContext);
+        if (!AudioContextClass) return;
+        context = new AudioContextClass();
+      }
+
+      if (context.state === 'suspended') {
+        context.resume();
+      }
+      
       const oscillator = context.createOscillator();
       const gain = context.createGain();
 
@@ -98,6 +122,27 @@ export default function StatusBoard() {
   return (
     <div className="min-h-screen flex flex-col overflow-hidden font-sans" style={{ background: '#000', color: '#fff' }}>
       
+      {/* 🔐 Audio Unlock Overlay */}
+      {isOverlayVisible && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-xl animate-in">
+          <div className="text-center p-12 glass-card max-w-md mx-6">
+            <div className="w-20 h-20 rounded-3xl bg-orange-500/20 flex items-center justify-center mx-auto mb-8 animate-pulse">
+               <Monitor size={40} className="text-orange-500" />
+            </div>
+            <h2 className="text-3xl font-black mb-3">26:07 Live Board</h2>
+            <p className="text-sm opacity-60 mb-10 text-pretty">
+              To enable real-time audio notifications and live order syncing, please join the board.
+            </p>
+            <button 
+              onClick={handleStart}
+              className="btn-saanam w-full text-lg py-5"
+            >
+              Start Experience
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 🚀 Status ticker (New) */}
       <div className="bg-orange-600 h-10 flex items-center overflow-hidden shrink-0">
         <div className="whitespace-nowrap flex items-center animate-ticker-slow">
