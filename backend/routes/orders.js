@@ -42,14 +42,14 @@ router.get('/status-board', async (req, res) => {
   try {
     const orders = await prisma.order.findMany({
       where: { 
-        status: { in: ['PREPARING', 'READY'] },
-        orderType: 'TAKEAWAY' // Usually for takeaway, but can be for both
+        status: { in: ['PREPARING', 'READY'] }
       },
       select: {
         id: true,
         orderNumber: true,
         status: true,
-        orderType: true
+        orderType: true,
+        tableNumber: true
       },
       orderBy: { createdAt: 'asc' },
     });

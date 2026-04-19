@@ -57,7 +57,9 @@ export default function StatusBoard() {
           {[...readyOrders, ...readyOrders, ...readyOrders].map((order, i) => (
             <div key={i} className="flex items-center gap-6 px-10">
               <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/80">Order Ready</span>
-              <span className="text-xl font-black text-white px-3 py-0.5 rounded-lg bg-black/20">#{order.orderNumber.slice(-3)}</span>
+              <span className="text-xl font-black text-white px-3 py-0.5 rounded-lg bg-black/20">
+                {order.orderType === 'DINE_IN' ? `TABLE ${order.tableNumber}` : `#${order.orderNumber.slice(-3)}`}
+              </span>
             </div>
           ))}
           {readyOrders.length === 0 && (
@@ -113,12 +115,13 @@ export default function StatusBoard() {
           <div className="flex-1 p-8 lg:p-10 pt-0 overflow-y-auto no-scrollbar">
             <div className="grid grid-cols-2 gap-4">
               {preparingOrders.map(order => (
-                <div key={order.id} className="flex items-center justify-center aspect-[4/3] rounded-3xl animate-in"
+                <div key={order.id} className="flex flex-col items-center justify-center aspect-[4/3] rounded-3xl animate-in"
                   style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
                 >
                   <span className="text-6xl lg:text-7xl font-black tracking-tighter animate-ticker" style={{ color: 'var(--text-secondary)' }}>
-                    {order.orderNumber.slice(-3)}
+                    {order.orderType === 'DINE_IN' ? `T${order.tableNumber}` : `#${order.orderNumber.slice(-3)}`}
                   </span>
+                  <p className="text-[9px] font-bold uppercase tracking-widest mt-2 opacity-40">Preparing</p>
                 </div>
               ))}
               {preparingOrders.length === 0 && (
@@ -150,7 +153,7 @@ export default function StatusBoard() {
                   }}
                 >
                   <span className="text-7xl lg:text-8xl font-black tracking-tighter" style={{ color: '#000' }}>
-                    {order.orderNumber.slice(-3)}
+                    {order.orderType === 'DINE_IN' ? `T${order.tableNumber}` : `#${order.orderNumber.slice(-3)}`}
                   </span>
                   <p className="mt-2 text-[10px] font-black uppercase tracking-[0.4em] opacity-60" style={{ color: '#000' }}>Ready Now</p>
                 </div>

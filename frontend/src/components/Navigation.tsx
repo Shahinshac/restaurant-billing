@@ -16,7 +16,8 @@ import {
   Flame,
   Sun,
   Moon,
-  Map
+  Map,
+  Monitor
 } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -40,6 +41,7 @@ export function Navigation() {
     { href: "/pos", label: "POS Terminal", icon: ShoppingBag },
     { href: "/tables", label: "Tables", icon: Grid },
     { href: "/kds", label: "Kitchen", icon: ChefHat },
+    { href: "/status", label: "Status Board", icon: Monitor },
     { href: "/queue", label: "Queue", icon: Users },
   ];
 

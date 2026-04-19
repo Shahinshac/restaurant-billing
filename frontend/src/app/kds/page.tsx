@@ -239,7 +239,7 @@ export default function KDSPage() {
                 </div>
 
                 {/* Action Footer */}
-                <div className="p-6 pt-0">
+                <div className="p-6 pt-0 mt-auto">
                   {isNew ? (
                     <button 
                       onClick={() => markOrderPreparing(order.id)}
@@ -250,14 +250,16 @@ export default function KDSPage() {
                       Start Cooking
                     </button>
                   ) : (
-                    <div className="w-full text-center py-3.5 font-bold uppercase tracking-widest rounded-xl"
+                    <div className="w-full text-center py-4 font-bold uppercase tracking-widest rounded-xl flex items-center justify-center gap-2"
                       style={{
-                        color: 'var(--text-dim)',
-                        border: '1px solid var(--border)',
-                        fontSize: '10px',
+                        background: 'var(--bg-elevated)',
+                        color: 'var(--accent)',
+                        border: '1px solid var(--accent-border)',
+                        fontSize: '9px',
                       }}
                     >
-                      In Production
+                      <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></div>
+                      Cooking in Progress
                     </div>
                   )}
                 </div>
