@@ -13,14 +13,19 @@ import {
   X,
   QrCode,
   Bell,
-  Flame
+  Flame,
+  Sun,
+  Moon,
+  Map
 } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useTheme } from "@/context/ThemeContext";
 
 export function Navigation() {
   const pathname = usePathname();
   const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
@@ -79,7 +84,7 @@ export function Navigation() {
         </div>
         
         {/* Nav Links */}
-        <div className="flex-1 px-4 space-y-1">
+        <div className="flex-1 px-4 space-y-1 overflow-y-auto no-scrollbar">
           <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] mb-4" style={{ color: 'var(--text-dim)' }}>
             Main Menu
           </p>
@@ -105,17 +110,6 @@ export function Navigation() {
               </Link>
             );
           })}
-
-          {/* Secondary */}
-          <div className="pt-8">
-            <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] mb-4" style={{ color: 'var(--text-dim)' }}>
-              Tools
-            </p>
-            <Link href="/admin/qr" className="nav-item group">
-              <QrCode size={20} strokeWidth={1.8} />
-              <span className="text-[13px]">QR Codes</span>
-            </Link>
-          </div>
 
           {/* Admin Management */}
           <div className="pt-8">
@@ -152,9 +146,19 @@ export function Navigation() {
                 <p className="text-sm font-bold truncate" style={{ color: 'var(--text-primary)' }}>Shahinsha</p>
                 <p className="text-[11px] font-medium truncate" style={{ color: 'var(--text-tertiary)' }}>Administrator</p>
               </div>
-              <button className="p-2 transition-colors hover:opacity-80" style={{ color: 'var(--text-dim)' }}>
-                <Bell size={16} />
-              </button>
+              <div className="flex items-center gap-0.5">
+                <button 
+                  onClick={toggleTheme}
+                  className="p-2 transition-all hover:scale-110" 
+                  style={{ color: 'var(--accent)' }}
+                  title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                >
+                  {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                </button>
+                <button className="p-2 transition-colors hover:opacity-80" style={{ color: 'var(--text-dim)' }}>
+                  <Bell size={16} />
+                </button>
+              </div>
             </div>
           </div>
           
@@ -194,13 +198,23 @@ export function Navigation() {
               Saanam
             </span>
           </div>
-          <button 
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-            className="w-9 h-9 flex items-center justify-center rounded-xl transition-all"
-            style={{ background: 'var(--bg-elevated)', color: 'var(--text-secondary)' }}
-          >
-            {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
-          </button>
+          
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={toggleTheme}
+              className="p-2.5 rounded-xl transition-all" 
+              style={{ background: 'var(--bg-elevated)', color: 'var(--accent)' }}
+            >
+              {theme === 'dark' ? <Sun size={18} strokeWidth={2.5} /> : <Moon size={18} strokeWidth={2.5} />}
+            </button>
+            <button 
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="p-2.5 rounded-xl"
+              style={{ background: 'var(--bg-elevated)', color: 'var(--text-primary)' }}
+            >
+              <Menu size={20} />
+            </button>
+          </div>
         </header>
 
         {/* Spacer for fixed header */}
@@ -224,8 +238,8 @@ export function Navigation() {
                   <X size={18} />
                 </button>
               </div>
-              <div className="space-y-1 flex-1">
-                {links.map((link) => (
+              <div className="space-y-1 flex-1 overflow-y-auto no-scrollbar">
+                {[...links, ...adminLinks].map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}

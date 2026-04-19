@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import QRCode from "qrcode";
-import { QrCode, Printer, Download, ChevronRight, Flame } from "lucide-react";
+import { QrCode, Printer, Download, ChevronRight, Flame, Activity, AlertCircle } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function QRDashboard() {

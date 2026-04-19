@@ -3,6 +3,7 @@ import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import AppLayout from "@/components/AppLayout";
+import { ThemeProvider } from "@/context/ThemeContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -37,29 +38,31 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${outfit.variable} scroll-smooth`}>
       <body className="antialiased font-sans">
-        <AppLayout>{children}</AppLayout>
-        <Toaster
-          position="bottom-right"
-          toastOptions={{
-            duration: 3500,
-            style: {
-              background: "#18181b",
-              color: "#fafafa",
-              borderRadius: "14px",
-              padding: "14px 20px",
-              fontSize: "13px",
-              fontWeight: "600",
-              border: "1px solid rgba(255,255,255,0.08)",
-              boxShadow: "0 20px 40px rgba(0, 0, 0, 0.5)",
-            },
-            success: { 
-              iconTheme: { primary: "#f97316", secondary: "#fff" },
-            },
-            error: { 
-              iconTheme: { primary: "#ef4444", secondary: "#fff" },
-            },
-          }}
-        />
+        <ThemeProvider>
+          <AppLayout>{children}</AppLayout>
+          <Toaster
+            position="bottom-right"
+            toastOptions={{
+              duration: 3500,
+              style: {
+                background: "var(--bg-surface)",
+                color: "var(--text-primary)",
+                borderRadius: "14px",
+                padding: "14px 20px",
+                fontSize: "13px",
+                fontWeight: "600",
+                border: "1px solid var(--border)",
+                boxShadow: "var(--shadow-lg)",
+              },
+              success: { 
+                iconTheme: { primary: "var(--accent)", secondary: "#fff" },
+              },
+              error: { 
+                iconTheme: { primary: "#ef4444", secondary: "#fff" },
+              },
+            }}
+          />
+        </ThemeProvider>
       </body>
     </html>
   );
