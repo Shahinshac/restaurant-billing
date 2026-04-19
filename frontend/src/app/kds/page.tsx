@@ -44,13 +44,6 @@ export default function KDSPage() {
     }
   };
 
-  const markOrderPreparing = async (orderId: string) => {
-    try {
-       await api.patch(`/orders/${orderId}/status`, { status: 'preparing' });
-    } catch (error) {
-       toast.error("Status update error");
-    }
-  };
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -240,28 +233,17 @@ export default function KDSPage() {
 
                 {/* Action Footer */}
                 <div className="p-6 pt-0 mt-auto">
-                  {isNew ? (
-                    <button 
-                      onClick={() => markOrderPreparing(order.id)}
-                      className="btn-saanam w-full text-[10px] uppercase tracking-widest"
-                      style={{ padding: wallMode ? '20px' : '16px' }}
-                    >
-                      <Flame size={14} />
-                      Start Cooking
-                    </button>
-                  ) : (
-                    <div className="w-full text-center py-4 font-bold uppercase tracking-widest rounded-xl flex items-center justify-center gap-2"
-                      style={{
-                        background: 'var(--bg-elevated)',
-                        color: 'var(--accent)',
-                        border: '1px solid var(--accent-border)',
-                        fontSize: '9px',
-                      }}
-                    >
-                      <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></div>
-                      Cooking in Progress
-                    </div>
-                  )}
+                  <div className="w-full text-center py-4 font-bold uppercase tracking-widest rounded-xl flex items-center justify-center gap-2"
+                    style={{
+                      background: 'var(--bg-elevated)',
+                      color: isNew ? 'var(--info)' : 'var(--accent)',
+                      border: isNew ? '1px solid rgba(59,130,246,0.2)' : '1px solid var(--accent-border)',
+                      fontSize: '9px',
+                    }}
+                  >
+                    <div className={`w-1.5 h-1.5 rounded-full ${isNew ? 'bg-blue-500' : 'bg-orange-500'} animate-pulse`}></div>
+                    {isNew ? 'New Order • Kitchen' : 'Cooking in Progress'}
+                  </div>
                 </div>
               </div>
             );

@@ -42,7 +42,7 @@ router.get('/status-board', async (req, res) => {
   try {
     const orders = await prisma.order.findMany({
       where: { 
-        status: { in: ['PREPARING', 'READY'] }
+        status: { in: ['PENDING', 'PREPARING', 'READY'] }
       },
       select: {
         id: true,
