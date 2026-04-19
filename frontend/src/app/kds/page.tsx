@@ -125,7 +125,7 @@ export default function KDSPage() {
             style={{ border: '2px dashed var(--border-hover)' }}
           >
             <ChefHat size={56} strokeWidth={1} style={{ color: 'var(--text-dim)' }} />
-            <p className="text-sm font-bold uppercase tracking-widest mt-5" style={{ color: 'var(--text-dim)' }}>Kitchen Queue Clear</p>
+            <p className="text-sm font-bold uppercase tracking-widest mt-5" style={{ color: 'var(--text-dim)' }}>Orders Clear</p>
           </div>
         ) : (
           orders.map((order) => {

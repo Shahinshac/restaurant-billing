@@ -1,7 +1,8 @@
 {
   "name": "restaurant-management-system",
   "version": "1.0.0",
-  "description": "Restaurant Management System - Queue, Table, POS & KDS",
+  "description": "Restaurant Management System - Table, POS & KDS",
+ Broadway
   "scripts": {
     "dev:backend": "node backend/server.js",
     "dev:frontend": "cd frontend && npm run dev",

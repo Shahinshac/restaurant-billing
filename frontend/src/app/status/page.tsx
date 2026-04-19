@@ -170,7 +170,7 @@ export default function StatusBoard() {
                 </div>
               ))}
               {preparingOrders.length === 0 && (
-                <p className="col-span-2 font-bold uppercase tracking-widest text-center mt-16 italic" style={{ color: 'var(--text-dim)' }}>Queue Clear</p>
+                <p className="col-span-2 font-bold uppercase tracking-widest text-center mt-16 italic" style={{ color: 'var(--text-dim)' }}>Orders Clear</p>
               )}
             </div>
           </div>

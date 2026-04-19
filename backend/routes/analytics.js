@@ -11,8 +11,7 @@ router.get('/summary', async (req, res) => {
     const [
       totalOrdersToday,
       totalOrdersAllTime,
-      activeTablesCount,
-      waitingQueueCount
+      activeTablesCount
     ] = await Promise.all([
       prisma.order.count({ where: { createdAt: { gte: today } } }),
       prisma.order.count(),
