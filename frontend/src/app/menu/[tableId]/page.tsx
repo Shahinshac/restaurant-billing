@@ -4,7 +4,7 @@ import { useEffect, useState, use } from "react";
 import api from "@/lib/api";
 import { socket } from "@/lib/socket";
 import toast from "react-hot-toast";
-import { ShoppingBag, Star, ChevronRight, Plus, Minus, Flame, Clock, CheckCircle2 } from "lucide-react";
+import { ShoppingBag, Star, ChevronRight, Plus, Minus, Flame, Clock, CheckCircle2, X } from "lucide-react";
 
 export default function DigitalMenu({ params }: { params: Promise<{ tableId: string }> }) {
   const unwrappedParams = use(params);
@@ -16,6 +16,7 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
   const [cart, setCart] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [tableInfo, setTableInfo] = useState<any>(null);
+  const [portionSelectionItem, setPortionSelectionItem] = useState<any>(null);
 
   useEffect(() => {
     fetchData();
@@ -50,24 +51,36 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
 
   const filteredMenu = activeCategory === "All" ? menu : menu.filter(m => m.category === activeCategory);
 
-  const addToCart = (item: any) => {
+  const addToCart = (item: any, selectedPortion: string = 'FULL') => {
+    const itemName = selectedPortion === 'FULL' ? item.name : `${item.name} (${selectedPortion})`;
+    const priceRatio = selectedPortion === '1/4' ? 0.25 : selectedPortion === '1/2' ? 0.5 : selectedPortion === '3/4' ? 0.75 : 1;
+    const finalPrice = Math.round(item.price * priceRatio);
+
     setCart(prev => {
-      const existing = prev.find(i => i.menuItem === item.id);
+      const existing = prev.find(i => i.name === itemName);
       if (existing) {
-        return prev.map(i => i.menuItem === item.id ? { ...i, quantity: i.quantity + 1 } : i);
+        return prev.map(i => i.name === itemName ? { ...i, quantity: i.quantity + 1 } : i);
       }
-      return [...prev, { menuItem: item.id, name: item.name, price: item.price, quantity: 1, isVeg: item.isVeg }];
+      return [...prev, { 
+        menuItem: item.id, 
+        name: itemName, 
+        price: finalPrice, 
+        quantity: 1, 
+        isVeg: item.isVeg,
+        portion: selectedPortion
+      }];
     });
-    toast.success(`${item.name} added`, { position: 'bottom-center', duration: 1000 });
+    setPortionSelectionItem(null);
+    toast.success(`${itemName} added`, { position: 'bottom-center', duration: 1000 });
   };
 
-  const removeFromCart = (itemId: string) => {
+  const removeFromCart = (itemName: string) => {
     setCart(prev => {
-      const existing = prev.find(i => i.menuItem === itemId);
+      const existing = prev.find(i => i.name === itemName);
       if (existing && existing.quantity > 1) {
-        return prev.map(i => i.menuItem === itemId ? { ...i, quantity: i.quantity - 1 } : i);
+        return prev.map(i => i.name === itemName ? { ...i, quantity: i.quantity - 1 } : i);
       }
-      return prev.filter(i => i.menuItem !== itemId);
+      return prev.filter(i => i.name !== itemName);
     });
   };
 
@@ -228,17 +241,17 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
               {cart.find(i => i.menuItem === item.id) ? (
                 <div className="flex items-center gap-2 bg-zinc-800/50 p-1.5 rounded-xl border border-white/5">
                   <button 
-                    onClick={() => removeFromCart(item.id)} 
+                    onClick={() => removeFromCart(item.name)} 
                     className="w-8 h-8 rounded-lg flex items-center justify-center transition-all active:scale-90"
                     style={{ background: 'var(--bg-elevated)', color: 'var(--text-primary)' }}
                   >
                     <Minus size={14} strokeWidth={3} />
                   </button>
                   <span className="w-6 text-center text-xs font-bold text-white">
-                    {cart.find(i => i.menuItem === item.id)?.quantity}
+                    {cart.filter(i => i.menuItem === item.id).reduce((acc, i) => acc + i.quantity, 0)}
                   </span>
                   <button 
-                    onClick={() => addToCart(item)} 
+                    onClick={() => item.hasPortions ? setPortionSelectionItem(item) : addToCart(item)} 
                     className="w-8 h-8 rounded-lg flex items-center justify-center transition-all active:scale-90"
                     style={{ background: 'var(--accent)', color: '#fff' }}
                   >
@@ -247,7 +260,7 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
                 </div>
               ) : (
                 <button 
-                  onClick={() => addToCart(item)} 
+                  onClick={() => item.hasPortions ? setPortionSelectionItem(item) : addToCart(item)} 
                   className="w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90"
                   style={{ background: 'var(--accent-soft)', color: 'var(--accent)', border: '1px solid var(--accent-border)' }}
                 >
@@ -289,6 +302,40 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
             Order
             <ChevronRight size={14} />
           </button>
+        </div>
+      )}
+      {/* Portion Selection Modal */}
+      {portionSelectionItem && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6"
+          style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)' }}
+        >
+          <div className="glass-card w-full max-w-sm p-8 animate-scale-in text-center relative">
+            <button 
+              onClick={() => setPortionSelectionItem(null)}
+              className="absolute top-6 right-6 text-zinc-500 hover:text-white"
+            >
+              <X size={20} />
+            </button>
+            <h2 className="text-xl font-black mb-1 capitalize" style={{ color: 'var(--text-primary)' }}>{portionSelectionItem.name}</h2>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-8 border-b border-white/5 pb-4">Select Portion Size</p>
+            
+            <div className="grid grid-cols-2 gap-4">
+              {['1/4', '1/2', '3/4', 'FULL'].map(p => {
+                const ratio = p === '1/4' ? 0.25 : p === '1/2' ? 0.5 : p === '3/4' ? 0.75 : 1;
+                const price = Math.round(portionSelectionItem.price * ratio);
+                return (
+                  <button 
+                    key={p}
+                    onClick={() => addToCart(portionSelectionItem, p)}
+                    className="p-6 rounded-2xl bg-zinc-900 border border-white/5 hover:border-orange-500/50 hover:bg-orange-500/5 transition-all text-center group"
+                  >
+                    <p className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-2 group-hover:text-orange-500">{p}</p>
+                    <p className="text-lg font-black tracking-tight" style={{ color: 'var(--text-primary)' }}>₹{price}</p>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </div>
       )}
     </div>
