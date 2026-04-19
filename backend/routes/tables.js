@@ -7,8 +7,7 @@ router.get('/', async (req, res) => {
   try {
     const tables = await prisma.table.findMany({
       include: {
-         currentOrder: { include: { items: true } },
-         queues: true
+         currentOrder: { include: { items: true } }
       },
       orderBy: { tableNumber: 'asc' }
     });
