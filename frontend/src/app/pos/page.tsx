@@ -44,15 +44,25 @@ export default function POSTerminal() {
   }, []);
 
   const handleTableSelect = (table: any) => {
+    // If clicking same table, toggle selection
     if (selectedTableId === table.id) {
        setSelectedTableId(null);
-       setCart([]);
-       setActiveOrderId(null);
+       if (activeOrderId) {
+         setCart([]);
+         setActiveOrderId(null);
+       }
        return;
     }
     
-    setSelectedTableId(table.id);
+    // Switching to an OCCUPIED table (Load Bill)
     if (table.status === 'OCCUPIED' && table.currentOrder) {
+       // Check if there are unsent items in current cart
+       const hasUnsent = cart.some(i => !i.isExisting);
+       if (hasUnsent && !window.confirm("Loading an active bill will discard your current draft items. Proceed?")) {
+         return;
+       }
+
+       setSelectedTableId(table.id);
        setActiveOrderId(table.currentOrderId);
        setCart(table.currentOrder.items.map((i: any) => ({
          id: i.menuItemId || i.id,
@@ -63,8 +73,18 @@ export default function POSTerminal() {
        })));
        toast.success(`Active bill loaded for Table ${table.tableNumber}`);
     } else {
-       setActiveOrderId(null);
-       setCart([]);
+       // Switching to an AVAILABLE table (Assign Table)
+       setSelectedTableId(table.id);
+       
+       // If we were previously viewing an active bill, we clear it to start new
+       if (activeOrderId) {
+          setCart([]);
+          setActiveOrderId(null);
+          toast.success(`New order for Table ${table.tableNumber}`);
+       } else {
+          // Case: New order draft - just changing table assignment, KEEP CART
+          toast.success(`Assigned to Table ${table.tableNumber}`);
+       }
     }
   };
 
