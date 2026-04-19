@@ -22,6 +22,8 @@ export default function InvoicesPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [statusFilter, setStatusFilter] = useState("all"); // all, paid, unpaid
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetchOrders();
@@ -47,11 +49,30 @@ export default function InvoicesPage() {
     }, 100);
   };
 
-  const filteredOrders = orders.filter(o => 
-    o.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
-    (o.tableNumber && o.tableNumber.toString().includes(search)) ||
-    (o.customerName && o.customerName.toLowerCase().includes(search.toLowerCase()))
-  );
+  const handleSettleOrder = async (orderId: string) => {
+    try {
+      setIsSubmitting(true);
+      await api.post(`/orders/${orderId}/pay`, { paymentMethod: 'cash' });
+      toast.success("Order Settled Successfully");
+      fetchOrders();
+    } catch (error) {
+      toast.error("Settlement failed");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const filteredOrders = orders.filter(o => {
+    const matchesSearch = o.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
+      (o.tableNumber && o.tableNumber.toString().includes(search)) ||
+      (o.customerName && o.customerName.toLowerCase().includes(search.toLowerCase()));
+    
+    const matchesStatus = statusFilter === 'all' || 
+      (statusFilter === 'paid' && o.paymentStatus === 'paid') ||
+      (statusFilter === 'unpaid' && o.paymentStatus === 'unpaid');
+      
+    return matchesSearch && matchesStatus;
+  });
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -154,7 +175,18 @@ export default function InvoicesPage() {
           </p>
         </div>
 
-        <div className="flex gap-4 w-full md:w-auto">
+        <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto mt-4 md:mt-0">
+          <div className="flex bg-zinc-900/50 p-1 rounded-xl border border-white/5">
+            {['all', 'paid', 'unpaid'].map((f) => (
+              <button
+                key={f}
+                onClick={() => setStatusFilter(f)}
+                className={`px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${statusFilter === f ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : 'text-zinc-500 hover:text-zinc-300'}`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
           <div className="relative flex-1 md:w-80">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30" size={18} />
             <input 
@@ -246,14 +278,25 @@ export default function InvoicesPage() {
                     <span className="text-base font-black tracking-tighter">₹{order.totalAmount.toFixed(2)}</span>
                   </td>
                   <td className="px-6 py-5 text-center">
-                    <button 
-                      onClick={() => handlePrint(order)}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95"
-                      style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
-                    >
-                      <Printer size={14} className="text-orange-500" />
-                      Reprint Bill
-                    </button>
+                    <div className="flex items-center justify-center gap-2">
+                      {order.paymentStatus === 'unpaid' && (
+                        <button 
+                          onClick={() => handleSettleOrder(order.id)}
+                          disabled={isSubmitting}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white"
+                        >
+                          Settle Cash
+                        </button>
+                      )}
+                      <button 
+                        onClick={() => handlePrint(order)}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95"
+                        style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                      >
+                        <Printer size={14} className="text-orange-500" />
+                        Reprint
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -32,6 +32,7 @@ export default function POSTerminal() {
   const [loading, setLoading] = useState(true);
   const [isTakeaway, setIsTakeaway] = useState(false);
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
+  const [customerDetails, setCustomerDetails] = useState({ name: '', phone: '' });
   const [heldOrder, setHeldOrder] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [portionSelectionItem, setPortionSelectionItem] = useState<any>(null);
@@ -52,6 +53,23 @@ export default function POSTerminal() {
       fetchInitialData();
     } catch (error) {
       toast.error("Failed to clear table");
+    }
+  };
+
+  const handleSettlePayment = async (tableId: string) => {
+    const table = tables.find(t => t.id === tableId);
+    if (!table || !table.currentOrderId) return;
+    
+    try {
+      setIsSubmitting(true);
+      await api.post(`/orders/${table.currentOrderId}/pay`, { paymentMethod: 'cash' });
+      toast.success("Payment Settled & Table Freed");
+      setSelectedTableId(null);
+      fetchInitialData();
+    } catch (error) {
+      toast.error("Settlement failed");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -393,7 +411,7 @@ export default function POSTerminal() {
           <div className="p-6" style={{ borderBottom: '1px solid var(--border)' }}>
             <div className="flex justify-between items-center mb-1">
               <h2 className="text-lg font-bold tracking-tight flex items-center gap-2.5" style={{ color: 'var(--text-primary)' }}>
-                {activeOrderId ? "Table Bill" : "Active Order"}
+                Active Order
                 {cart.length > 0 && (
                   <span className="w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center"
                     style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}
@@ -449,9 +467,9 @@ export default function POSTerminal() {
                         color: '#fff',
                         boxShadow: '0 4px 20px rgba(249,115,22,0.35)',
                       } : isOccupied ? {
-                        background: 'var(--danger-soft)',
-                        color: 'var(--danger)',
-                        border: '1px solid rgba(239,68,68,0.2)',
+                        background: table.currentOrder?.paymentStatus === 'unpaid' ? 'var(--warning-soft)' : 'var(--danger-soft)',
+                        color: table.currentOrder?.paymentStatus === 'unpaid' ? 'var(--warning)' : 'var(--danger)',
+                        border: table.currentOrder?.paymentStatus === 'unpaid' ? '1px solid rgba(245,158,11,0.2)' : '1px solid rgba(239,68,68,0.2)',
                       } : {
                         background: 'var(--bg-surface)',
                         color: 'var(--text-dim)',
@@ -460,7 +478,10 @@ export default function POSTerminal() {
                     >
                       <span className="text-[11px] font-black tracking-tight leading-none mb-0.5">T{table.tableNumber}</span>
                       <span className="text-[8px] font-bold uppercase tracking-widest opacity-60">{table.capacity} PAX</span>
-                      <div className={`absolute top-1 right-1 w-1.5 h-1.5 rounded-full ${isOccupied ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`}></div>
+                      <div className={`absolute top-1 right-1 w-1.5 h-1.5 rounded-full ${isOccupied ? (table.currentOrder?.paymentStatus === 'unpaid' ? 'bg-amber-500 animate-pulse' : 'bg-red-500 animate-pulse') : 'bg-emerald-500'}`}></div>
+                      {table.currentOrder?.paymentStatus === 'unpaid' && (
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center text-[8px] font-black shadow-lg">₹</div>
+                      )}
                     </button>
                   );
                 })}
@@ -502,14 +523,27 @@ export default function POSTerminal() {
           <div className="p-6 space-y-4" style={{ background: 'var(--bg-elevated)', borderTop: '1px solid var(--border)' }}>
             
             {selectedTableId && tables.find(t => t.id === selectedTableId)?.status === 'OCCUPIED' && (
-              <button 
-                onClick={() => handleClearTable(selectedTableId)}
-                className="w-full btn-saanam flex items-center justify-center gap-2.5 py-4 mb-2"
-                style={{ background: 'var(--danger-soft)', color: 'var(--danger)', border: '1px solid var(--danger-border)' }}
-              >
-                <X size={18} />
-                Clear Table
-              </button>
+              <div className="space-y-2 mb-2">
+                {tables.find(t => t.id === selectedTableId)?.currentOrder?.paymentStatus === 'unpaid' && (
+                  <button 
+                    onClick={() => handleSettlePayment(selectedTableId)}
+                    disabled={isSubmitting}
+                    className="w-full btn-saanam flex items-center justify-center gap-2.5 py-4"
+                    style={{ background: 'var(--success)', color: '#fff', border: 'none' }}
+                  >
+                    <CheckCircle2 size={18} />
+                    Settle Cash (₹{tables.find(t => t.id === selectedTableId)?.currentOrder?.totalAmount})
+                  </button>
+                )}
+                <button 
+                  onClick={() => handleClearTable(selectedTableId)}
+                  className="w-full btn-saanam flex items-center justify-center gap-2.5 py-4"
+                  style={{ background: 'var(--bg-elevated)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
+                >
+                  <X size={18} />
+                  Force Clear Table
+                </button>
+              </div>
             )}
 
             <div className="space-y-2">
