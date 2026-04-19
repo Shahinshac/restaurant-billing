@@ -105,4 +105,26 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// Clear table manually
+router.post('/:id/clear', async (req, res) => {
+  try {
+    const table = await prisma.table.update({
+      where: { id: req.params.id },
+      data: {
+        status: 'FREE',
+        currentOrderId: null,
+        occupiedAt: null
+      },
+      include: { currentOrder: true }
+    });
+    
+    // Notify terminals
+    req.app.get('io').emit('table_updated', { action: 'cleared', table });
+    
+    res.json({ success: true, data: table });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;

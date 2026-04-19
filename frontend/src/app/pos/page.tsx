@@ -32,12 +32,9 @@ export default function POSTerminal() {
   const [loading, setLoading] = useState(true);
   const [isTakeaway, setIsTakeaway] = useState(false);
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
-  const [customerDetails, setCustomerDetails] = useState({ name: '', phone: '' });
   const [heldOrder, setHeldOrder] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isPaid, setIsPaid] = useState(false);
   const [portionSelectionItem, setPortionSelectionItem] = useState<any>(null);
-  const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem('pos_held_order');
@@ -45,66 +42,16 @@ export default function POSTerminal() {
   }, []);
 
   const handleTableSelect = (table: any) => {
-    // If clicking same table, toggle selection
-    if (selectedTableId === table.id) {
-       setSelectedTableId(null);
-       if (activeOrderId) {
-         setCart([]);
-         setActiveOrderId(null);
-       }
-       return;
-    }
-    
-    // Switching to an OCCUPIED table (Load Bill)
-    if (table.status === 'OCCUPIED' && table.currentOrder) {
-       // Check if there are unsent items in current cart
-       const hasUnsent = cart.some(i => !i.isExisting);
-       if (hasUnsent && !window.confirm("Loading an active bill will discard your current draft items. Proceed?")) {
-         return;
-       }
+    setSelectedTableId(prev => prev === table.id ? null : table.id);
+  };
 
-       setSelectedTableId(table.id);
-       setActiveOrderId(table.currentOrderId);
-       
-       if (table.currentOrder && table.currentOrder.items) {
-         setCart(table.currentOrder.items.map((i: any) => ({
-           id: i.menuItemId || i.id,
-           name: i.itemName,
-           price: i.price,
-           quantity: i.quantity,
-           isExisting: true
-         })));
-         toast.success(`Bill loaded: Table ${table.tableNumber}`);
-       } else {
-         // Fallback if data is missing - fetch fresh
-         api.get(`/tables/${table.id}`).then(res => {
-            const freshTable = res.data.data;
-            if (freshTable.currentOrder) {
-              setCart(freshTable.currentOrder.items.map((i: any) => ({
-                id: i.menuItemId || i.id,
-                name: i.itemName,
-                price: i.price,
-                quantity: i.quantity,
-                isExisting: true
-              })));
-              setTables(prev => prev.map(t => t.id === freshTable.id ? freshTable : t));
-              toast.success(`Bill Sync Complete`);
-            }
-         });
-       }
-    } else {
-       // Switching to an AVAILABLE table (Assign Table)
-       setSelectedTableId(table.id);
-       
-       // If we were previously viewing an active bill, we clear it to start new
-       if (activeOrderId) {
-          setCart([]);
-          setActiveOrderId(null);
-          toast.success(`New order for Table ${table.tableNumber}`);
-       } else {
-          // Case: New order draft - just changing table assignment, KEEP CART
-          toast.success(`Assigned to Table ${table.tableNumber}`);
-       }
+  const handleClearTable = async (tableId: string) => {
+    try {
+      await api.post(`/tables/${tableId}/clear`);
+      toast.success("Table Cleared");
+      fetchInitialData();
+    } catch (error) {
+      toast.error("Failed to clear table");
     }
   };
 
@@ -184,91 +131,40 @@ export default function POSTerminal() {
     setPortionSelectionItem(null);
   };
 
-  const removeFromCart = (itemId: string, name?: string) => {
-    setCart(prev => prev.filter(i => {
-      if (name) return i.name !== name;
-      return i.id !== itemId;
-    }));
+  const removeFromCart = (itemId: string) => {
+    setCart(prev => prev.filter(i => i.id !== itemId));
   };
 
-  const updateQuantity = (itemId: string, delta: number, name?: string) => {
-    setCart(prev => prev.map(i => {
-      const match = name ? i.name === name : i.id === itemId;
-      if (match) {
-        const newQty = Math.max(1, i.quantity + delta);
-        return { ...i, quantity: newQty };
-      }
-      return i;
-    }));
-  };
-
-  const handleSettleBill = async () => {
-    if (!activeOrderId) return;
-    if (!window.confirm("Are you sure you want to settle this bill and free the table?")) return;
-    
-    setIsSubmitting(true);
-    try {
-      await api.post(`/orders/${activeOrderId}/pay`, { 
-        paymentMethod: 'cash' 
-      });
-      toast.success("Table Settled Successfully");
-      setCart([]);
-      setSelectedTableId(null);
-      setActiveOrderId(null);
-      fetchInitialData();
-    } catch (error) {
-      toast.error("Failed to settle bill");
-    } finally {
-      setIsSubmitting(false);
-    }
+  const updateQuantity = (itemId: string, delta: number) => {
+    setCart(prev => prev.map(i => i.id === itemId ? { ...i, quantity: Math.max(1, i.quantity + delta) } : i));
   };
 
   const handlePlaceOrder = async () => {
-    if (isSubmitting) return;
-    
-    // If adding items to active bill, only send the NEW ones
-    const newItems = cart.filter(i => !i.isExisting);
-    if (newItems.length === 0 && !activeOrderId) return toast.error("No new items to fire");
+    if (isSubmitting || cart.length === 0) return;
     if (!isTakeaway && !selectedTableId) return toast.error("Please select a table");
 
     setIsSubmitting(true);
     try {
-      if (activeOrderId) {
-        // Mode: Add items to existing order
-        await api.post(`/orders/${activeOrderId}/add-items`, {
-          items: newItems.map(i => ({
-            menuItemId: i.id,
-            name: i.name,
-            price: i.price,
-            quantity: i.quantity
-          }))
-        });
-        toast.success("Additional items fired to kitchen!");
-      } else {
-        // Mode: New Order
-        const payload = {
-          tableId: isTakeaway ? null : selectedTableId,
-          orderType: isTakeaway ? 'TAKEAWAY' : 'DINE_IN',
-          customerName: customerDetails.name,
-          customerPhone: customerDetails.phone,
-          paymentStatus: isPaid ? 'paid' : 'unpaid',
-          paymentMethod: isPaid ? 'cash' : 'pending',
-          items: cart.map(i => ({
-            menuItemId: i.id,
-            name: i.name,
-            price: i.price,
-            quantity: i.quantity
-          }))
-        };
-        await api.post('/orders', payload);
-        toast.success("New order fired successfully!");
-      }
+      const payload = {
+        tableId: isTakeaway ? null : selectedTableId,
+        orderType: isTakeaway ? 'TAKEAWAY' : 'DINE_IN',
+        customerName: customerDetails.name,
+        customerPhone: customerDetails.phone,
+        paymentStatus: 'unpaid',
+        paymentMethod: 'pending',
+        items: cart.map(i => ({
+          menuItemId: i.id,
+          name: i.name,
+          price: i.price,
+          quantity: i.quantity
+        }))
+      };
+      await api.post('/orders', payload);
+      toast.success("Order sent to kitchen!");
 
       setCart([]);
       setSelectedTableId(null);
-      setActiveOrderId(null);
       setCustomerDetails({ name: '', phone: '' });
-      setIsPaid(false);
       fetchInitialData();
     } catch (error) {
       toast.error("Failed to place order");
@@ -584,29 +480,19 @@ export default function POSTerminal() {
               cart.map((item, idx) => (
                 <div key={`${item.id}-${idx}`} className="flex justify-between items-center group animate-in">
                   <div className="flex-1 pr-4 flex items-start gap-2.5">
-                    <div className="w-1.5 h-6 rounded-full mt-0.5" style={{ background: item.isExisting ? 'var(--text-dim)' : 'var(--accent)' }}></div>
+                    <div className="w-1.5 h-6 rounded-full mt-0.5" style={{ background: 'var(--accent)' }}></div>
                     <div>
-                      <p className="text-xs font-bold leading-tight" style={{ color: item.isExisting ? 'var(--text-dim)' : 'var(--text-primary)' }}>
-                        {item.name}
-                        {item.isExisting && <span className="ml-2 text-[8px] opacity-60 uppercase tracking-widest">(SENT)</span>}
-                      </p>
+                      <p className="text-xs font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>{item.name}</p>
                       <p className="text-[10px] font-bold mt-1" style={{ color: 'var(--text-dim)' }}>₹{item.price}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    {!item.isExisting && (
-                      <>
-                        <div className="flex items-center bg-zinc-800/50 rounded-lg p-1 border border-white/5">
-                          <button onClick={() => updateQuantity(item.id, -1, item.name)} className="p-1 hover:text-white transition-colors"><Minus size={12} /></button>
-                          <span className="w-6 text-center text-xs font-bold">{item.quantity}</span>
-                          <button onClick={() => updateQuantity(item.id, 1, item.name)} className="p-1 hover:text-white transition-colors"><Plus size={12} /></button>
-                        </div>
-                        <button onClick={() => removeFromCart(item.id, item.name)} className="text-zinc-600 hover:text-red-500 transition-colors"><Trash2 size={14} /></button>
-                      </>
-                    )}
-                    {item.isExisting && (
-                      <span className="text-[10px] font-black opacity-40">x{item.quantity}</span>
-                    )}
+                    <div className="flex items-center bg-zinc-800/50 rounded-lg p-1 border border-white/5">
+                      <button onClick={() => updateQuantity(item.id, -1)} className="p-1 hover:text-white transition-colors"><Minus size={12} /></button>
+                      <span className="w-6 text-center text-xs font-bold">{item.quantity}</span>
+                      <button onClick={() => updateQuantity(item.id, 1)} className="p-1 hover:text-white transition-colors"><Plus size={12} /></button>
+                    </div>
+                    <button onClick={() => removeFromCart(item.id)} className="text-zinc-600 hover:text-red-500 transition-colors"><Trash2 size={14} /></button>
                   </div>
                 </div>
               ))
@@ -615,27 +501,15 @@ export default function POSTerminal() {
 
           <div className="p-6 space-y-4" style={{ background: 'var(--bg-elevated)', borderTop: '1px solid var(--border)' }}>
             
-            {activeOrderId ? (
+            {selectedTableId && tables.find(t => t.id === selectedTableId)?.status === 'OCCUPIED' && (
               <button 
-                onClick={handleSettleBill}
-                disabled={isSubmitting}
+                onClick={() => handleClearTable(selectedTableId)}
                 className="w-full btn-saanam flex items-center justify-center gap-2.5 py-4 mb-2"
-                style={{ background: 'var(--success)', border: 'none' }}
+                style={{ background: 'var(--danger-soft)', color: 'var(--danger)', border: '1px solid var(--danger-border)' }}
               >
-                <CheckCircle2 size={18} />
-                Settle & Checkout Bill
+                <X size={18} />
+                Clear Table
               </button>
-            ) : (
-              <div className="flex items-center justify-between pb-4" style={{ borderBottom: '1px dashed var(--border)' }}>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: 'var(--text-dim)' }}>Payment Status</p>
-                <button 
-                  onClick={() => setIsPaid(!isPaid)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isPaid ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'bg-gray-500/5 text-gray-500 border border-white/5'}`}
-                >
-                  {isPaid ? <CheckCircle2 size={14} /> : <Clock size={14} />}
-                  {isPaid ? 'Paid Upfront' : 'Pay After Food'}
-                </button>
-              </div>
             )}
 
             <div className="space-y-2">
@@ -678,12 +552,12 @@ export default function POSTerminal() {
               </button>
               <button 
                 onClick={handlePlaceOrder}
-                disabled={isSubmitting || (cart.filter(i => !i.isExisting).length === 0 && !activeOrderId)}
+                disabled={isSubmitting || cart.length === 0}
                 className="btn-saanam col-span-2 text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-2.5"
                 style={{ padding: '18px 28px' }}
               >
                 <Flame size={16} />
-                {activeOrderId ? 'Add to Order' : 'Fire Order'}
+                Fire Order
                 <ArrowRight size={14} />
               </button>
             </div>
