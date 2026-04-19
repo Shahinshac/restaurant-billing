@@ -32,3 +32,5 @@ backend/prisma/db.sqlite-journal
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+.vercel
