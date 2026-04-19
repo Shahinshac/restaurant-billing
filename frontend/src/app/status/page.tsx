@@ -34,12 +34,16 @@ export default function StatusBoard() {
 
   const handleStart = async () => {
     setIsOverlayVisible(false);
-    // Initialize AudioContext on user gesture
     try {
       const AudioContextClass = (window.AudioContext || (window as any).webkitAudioContext);
       if (AudioContextClass) {
-        audioContextRef.current = new AudioContextClass();
-        await audioContextRef.current.resume();
+        const context = new AudioContextClass();
+        audioContextRef.current = context;
+        if (context.state === 'suspended') {
+          await context.resume();
+        }
+        // Play a short test beep so the user knows audio is working
+        playNotificationSound();
       }
     } catch (e) {
       console.error("Audio init failed", e);
@@ -48,33 +52,57 @@ export default function StatusBoard() {
 
   const playNotificationSound = () => {
     try {
-      let context = audioContextRef.current;
-      
-      if (!context) {
-        const AudioContextClass = (window.AudioContext || (window as any).webkitAudioContext);
-        if (!AudioContextClass) return;
-        context = new AudioContextClass();
-      }
+      const context = audioContextRef.current;
+      if (!context) return;
 
       if (context.state === 'suspended') {
         context.resume();
       }
       
-      const oscillator = context.createOscillator();
-      const gain = context.createGain();
-
-      oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(880, context.currentTime); // High pitch beep
+      const now = context.currentTime;
       
-      oscillator.connect(gain);
-      gain.connect(context.destination);
+      // We'll create a musical "Ding-Dong" chime using two sets of oscillators
+      const playTone = (freq: number, startTime: number, duration: number) => {
+        const osc = context.createOscillator();
+        const g = context.createGain();
+        
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, startTime);
+        
+        // Add a secondary harmonic for a richer "Bell" feel
+        const oscPrimary = context.createOscillator();
+        oscPrimary.type = "triangle";
+        oscPrimary.frequency.setValueAtTime(freq * 2, startTime);
+        const gPrimary = context.createGain();
 
-      gain.gain.setValueAtTime(0, context.currentTime);
-      gain.gain.linearRampToValueAtTime(0.3, context.currentTime + 0.05);
-      gain.gain.linearRampToValueAtTime(0, context.currentTime + 0.4);
+        osc.connect(g);
+        oscPrimary.connect(gPrimary);
+        g.connect(context.destination);
+        gPrimary.connect(context.destination);
 
-      oscillator.start(context.currentTime);
-      oscillator.stop(context.currentTime + 0.4);
+        // Exponential decay for that "Bell" chime effect
+        g.gain.setValueAtTime(0, startTime);
+        g.gain.linearRampToValueAtTime(0.2, startTime + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+        gPrimary.gain.setValueAtTime(0, startTime);
+        gPrimary.gain.linearRampToValueAtTime(0.05, startTime + 0.02);
+        gPrimary.gain.exponentialRampToValueAtTime(0.001, startTime + 0.1);
+
+        osc.start(startTime);
+        oscPrimary.start(startTime);
+        osc.stop(startTime + duration);
+        oscPrimary.stop(startTime + duration);
+      };
+
+      // Play the musical chime: Note E5 followed by G5
+      playTone(659.25, now, 1.0); // E5
+      setTimeout(() => {
+        if (audioContextRef.current) {
+          playTone(783.99, now + 0.15, 0.8); // G5
+        }
+      }, 150);
+
     } catch (e) {
       console.error("Audio failed", e);
     }
