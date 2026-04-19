@@ -20,13 +20,13 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Saanam — Premium Restaurant Management Suite",
-  description: "Cinematic POS, Kitchen Display, Analytics & Real-time Operations for modern restaurants.",
+  title: "26:07 | Professional Restaurant Suite",
+  description: "Next-generation restaurant management platform",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Saanam",
+    title: "26:07",
   },
 };
 

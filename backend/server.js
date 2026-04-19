@@ -55,13 +55,11 @@ const menuRouter = require('./routes/menu');
 const orderRouter = require('./routes/orders');
 const tableRouter = require('./routes/tables');
 const bookingRouter = require('./routes/bookings');
-const waitlistRouter = require('./routes/waitlist');
 const analyticsRoutes = require('./routes/analytics');
 
 app.use('/api/menu', menuRouter);
 app.use('/api/orders', orderRouter);
 app.use('/api/tables', tableRouter);
-app.use('/api/waitlist', waitlistRouter);
 
 app.use('/api/bookings', bookingRouter);
 app.use('/api/analytics', analyticsRoutes);

@@ -42,7 +42,6 @@ export function Navigation() {
     { href: "/tables", label: "Tables", icon: Grid },
     { href: "/kds", label: "Kitchen", icon: ChefHat },
     { href: "/status", label: "Status Board", icon: Monitor },
-    { href: "/waitlist", label: "Waitlist", icon: Users },
   ];
 
   const adminLinks = [
@@ -73,7 +72,7 @@ export function Navigation() {
             </div>
             <div>
               <h1 className="text-xl font-black tracking-tight" style={{ fontFamily: 'var(--font-outfit), sans-serif', color: 'var(--text-primary)' }}>
-                Saanam
+                26:07
               </h1>
               <div className="flex items-center gap-2 mt-0.5">
                 <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--success)' }}></div>
@@ -197,7 +196,7 @@ export function Navigation() {
               <Flame size={18} className="text-white" />
             </div>
             <span className="text-base font-bold tracking-tight" style={{ fontFamily: 'var(--font-outfit), sans-serif', color: 'var(--text-primary)' }}>
-              Saanam
+              26:07
             </span>
           </div>
           

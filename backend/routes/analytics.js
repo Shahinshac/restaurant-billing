@@ -16,8 +16,7 @@ router.get('/summary', async (req, res) => {
     ] = await Promise.all([
       prisma.order.count({ where: { createdAt: { gte: today } } }),
       prisma.order.count(),
-      prisma.table.count({ where: { status: 'OCCUPIED' } }),
-      prisma.waitlist.count({ where: { status: 'WAITING' } })
+      prisma.table.count({ where: { status: 'OCCUPIED' } })
     ]);
 
     const todayOrders = await prisma.order.findMany({
@@ -56,11 +55,7 @@ router.get('/summary', async (req, res) => {
         .sort()
         .map(d => ({ _id: d, revenue: revenueByDayMap[d].revenue, orders: revenueByDayMap[d].orders }));
 
-    const waitQueues = await prisma.waitlist.findMany({
-        where: { status: { in: ['ASSIGNED', 'WAITING'] } },
-        select: { estimatedWait: true }
-    });
-    const avgWaitTime = waitQueues.length > 0 ? waitQueues.reduce((sum, q) => sum + q.estimatedWait, 0) / waitQueues.length : 0;
+    const avgWaitTime = 0; // Waitlist removed
 
     res.json({
       success: true,
@@ -68,7 +63,6 @@ router.get('/summary', async (req, res) => {
         totalOrdersToday,
         revenueToday: parseFloat(revenueToday.toFixed(2)),
         activeTablesCount,
-        waitingQueueCount,
         totalOrdersAllTime,
         peakHours,
         avgWaitTime: Math.round(avgWaitTime),

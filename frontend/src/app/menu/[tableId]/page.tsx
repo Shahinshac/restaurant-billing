@@ -115,7 +115,7 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
             <div className="flex items-center gap-2 mb-1">
               <Flame size={18} style={{ color: 'var(--accent)' }} />
               <h1 className="text-2xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-outfit), sans-serif', color: 'var(--text-primary)' }}>
-                Saanam
+                26:07
               </h1>
             </div>
             <div className="flex items-center gap-2 mt-1.5">

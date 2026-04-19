@@ -30,7 +30,7 @@ model Table {
   posY        Int       @default(0)
 
   orders   Order[]   @relation("TableAllOrders")
-  waitlist Waitlist[]
+
   bookings Booking[]
 }
 
@@ -50,21 +50,6 @@ model Booking {
   createdAt       DateTime @default(now())
 }
 
-model Waitlist {
-  id              String   @id @default(uuid())
-  customerName    String
-  peopleCount     Int
-  status          String   @default("WAITING") // WAITING, READY, ASSIGNED
-  qrCode          String   @default("")
-  waitlistNumber  Int      @default(autoincrement())
-  estimatedWait   Int      @default(0)
-  
-  assignedTableId String?
-  table           Table?   @relation(fields: [assignedTableId], references: [id], onDelete: SetNull)
-  
-  notes           String   @default("")
-  createdAt       DateTime @default(now())
-}
 
 model MenuItem {
   id          String   @id @default(uuid())

@@ -59,8 +59,9 @@ export default function LoginPage() {
             <Flame size={32} className="text-white" />
           </div>
           <h1 className="text-3xl font-black tracking-tight" style={{ fontFamily: 'var(--font-outfit), sans-serif', color: 'var(--text-primary)' }}>
-            Saanam
+            26:07
           </h1>
+ Broadway
           <p className="text-sm mt-1 font-medium" style={{ color: 'var(--text-tertiary)' }}>
             Restaurant Management Suite
           </p>
@@ -137,7 +138,7 @@ export default function LoginPage() {
 
           <div className="mt-8 text-center">
             <p className="text-[11px] font-medium uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
-              Saanam Suite v2.0
+              26:07 Suite v2.0
             </p>
           </div>
         </div>

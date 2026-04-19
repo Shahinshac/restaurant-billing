@@ -167,7 +167,7 @@ export default function POSTerminal() {
       {/* ═══════ Printable Receipt (Hidden) ═══════ */}
       <div className="hidden print:block print-only print:w-[80mm] print:p-4 text-black bg-white font-mono text-[12px] leading-tight">
         <div className="text-center mb-4">
-          <h1 className="text-lg font-bold uppercase tracking-tighter">Saanam</h1>
+          <h1 className="text-lg font-bold uppercase tracking-tighter">26:07</h1>
           <p className="text-[10px]">Restaurant Management Suite</p>
           <div className="border-b border-dashed border-black my-2"></div>
           <p className="uppercase font-bold">Bill Receipt</p>
@@ -231,7 +231,7 @@ export default function POSTerminal() {
         </div>
 
         <div className="text-center mt-8 pt-4 border-t border-dashed border-black">
-          <p className="text-[10px] mb-1">Thank you for visiting Saanam!</p>
+          <p className="text-[10px] mb-1">Thank you for visiting 26:07!</p>
           <p className="text-[9px] uppercase tracking-widest">Visit us again</p>
         </div>
       </div>
@@ -250,7 +250,7 @@ export default function POSTerminal() {
                   <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>POS Terminal • Online</p>
                 </div>
                 <h1 className="text-xl font-black tracking-tight" style={{ fontFamily: 'var(--font-outfit), sans-serif', color: 'var(--text-primary)' }}>
-                  Menu Register
+                  26:07
                 </h1>
               </div>
 

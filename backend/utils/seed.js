@@ -57,7 +57,7 @@ const seedDatabase = async () => {
     await prisma.table.updateMany({ data: { currentOrderId: null } });
     await prisma.orderItem.deleteMany();
     await prisma.order.deleteMany();
-    await prisma.waitlist.deleteMany();
+
     await prisma.menuItem.deleteMany();
     await prisma.table.deleteMany();
 
@@ -139,13 +139,6 @@ const seedDatabase = async () => {
     ];
     await prisma.booking.createMany({ data: bookingData });
 
-    console.log('👥 Seeding Customer Waitlist...');
-    const queueData = [
-      { customerName: 'Rahul Sharma', peopleCount: 4, status: 'WAITING', estimatedWait: 15 },
-      { customerName: 'Priya Patel', peopleCount: 2, status: 'WAITING', estimatedWait: 10 },
-      { customerName: 'Amit Verma', peopleCount: 6, status: 'READY', estimatedWait: 5 },
-    ];
-    await prisma.waitlist.createMany({ data: queueData });
 
     console.log('✅ Database seeded successfully!');
   } catch (err) {

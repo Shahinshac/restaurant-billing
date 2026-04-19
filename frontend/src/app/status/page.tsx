@@ -1,6 +1,4 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import api from "@/lib/api";
 import { socket } from "@/lib/socket";
 import { CheckCircle2, Clock, Flame } from "lucide-react";
@@ -10,6 +8,9 @@ export default function StatusBoard() {
   const [readyOrders, setReadyOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [time, setTime] = useState(new Date());
+  
+  // Track IDs of orders already notified to prevent duplicate beeps
+  const revealedIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     fetchOrders();
@@ -27,12 +28,56 @@ export default function StatusBoard() {
     };
   }, []);
 
+  const playNotificationSound = () => {
+    try {
+      const AudioContext = (window.AudioContext || (window as any).webkitAudioContext);
+      if (!AudioContext) return;
+      
+      const context = new AudioContext();
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(880, context.currentTime); // High pitch beep
+      
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+
+      gain.gain.setValueAtTime(0, context.currentTime);
+      gain.gain.linearRampToValueAtTime(0.3, context.currentTime + 0.05);
+      gain.gain.linearRampToValueAtTime(0, context.currentTime + 0.4);
+
+      oscillator.start(context.currentTime);
+      oscillator.stop(context.currentTime + 0.4);
+    } catch (e) {
+      console.error("Audio failed", e);
+    }
+  };
+
   const fetchOrders = async () => {
     try {
       const res = await api.get('/orders/status-board');
       const data = res.data.data;
-      setPreparingOrders(data.filter((o: any) => o.status === 'PREPARING' || o.status === 'PENDING'));
-      setReadyOrders(data.filter((o: any) => o.status === 'READY'));
+      
+      const preparing = data.filter((o: any) => o.status === 'PREPARING' || o.status === 'PENDING');
+      const ready = data.filter((o: any) => o.status === 'READY');
+      
+      setPreparingOrders(preparing);
+      
+      // Check for new ready orders to trigger sound
+      let hasNewReady = false;
+      ready.forEach((order: any) => {
+        if (!revealedIdsRef.current.has(order.id)) {
+          revealedIdsRef.current.add(order.id);
+          hasNewReady = true;
+        }
+      });
+
+      if (hasNewReady && !loading) {
+        playNotificationSound();
+      }
+
+      setReadyOrders(ready);
     } catch (error) {
       console.error("Board sync error");
     } finally {
@@ -173,7 +218,7 @@ export default function StatusBoard() {
         <div className="flex items-center gap-3">
           <Flame size={16} style={{ color: 'var(--accent)' }} />
           <span className="text-[10px] font-bold uppercase tracking-[0.3em]" style={{ color: 'var(--text-dim)' }}>
-            Saanam <span style={{ color: 'var(--accent)' }}>Suite</span>
+            26:07 <span style={{ color: 'var(--accent)' }}>Suite</span>
           </span>
         </div>
         <div className="flex flex-col items-end gap-1.5">
