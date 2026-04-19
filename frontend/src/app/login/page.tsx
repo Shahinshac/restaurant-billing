@@ -61,7 +61,6 @@ export default function LoginPage() {
           <h1 className="text-3xl font-black tracking-tight" style={{ fontFamily: 'var(--font-outfit), sans-serif', color: 'var(--text-primary)' }}>
             26:07
           </h1>
- Broadway
           <p className="text-sm mt-1 font-medium" style={{ color: 'var(--text-tertiary)' }}>
             Restaurant Management Suite
           </p>
