@@ -50,6 +50,24 @@ export default function StatusBoard() {
 
   return (
     <div className="min-h-screen flex flex-col overflow-hidden font-sans" style={{ background: '#000', color: '#fff' }}>
+      
+      {/* 🚀 Status ticker (New) */}
+      <div className="bg-orange-600 h-10 flex items-center overflow-hidden shrink-0">
+        <div className="whitespace-nowrap flex items-center animate-ticker-slow">
+          {[...readyOrders, ...readyOrders, ...readyOrders].map((order, i) => (
+            <div key={i} className="flex items-center gap-6 px-10">
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/80">Order Ready</span>
+              <span className="text-xl font-black text-white px-3 py-0.5 rounded-lg bg-black/20">#{order.orderNumber.slice(-3)}</span>
+            </div>
+          ))}
+          {readyOrders.length === 0 && (
+            <div className="flex items-center gap-6 px-10">
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/50">Awaiting delicious orders...</span>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Cinematic Header */}
       <header className="p-8 lg:p-10 flex justify-between items-end shrink-0"
         style={{ background: 'rgba(24,24,27,0.3)', borderBottom: '1px solid var(--border)' }}

@@ -248,4 +248,53 @@ router.patch('/:orderId/items/:itemId/status', async (req, res) => {
   }
 });
 
+// Add items to existing order
+router.post('/:id/add-items', async (req, res) => {
+  try {
+    const { items } = req.body;
+    const orderId = req.params.id;
+
+    const result = await prisma.$transaction(async (tx) => {
+      // Create new order items
+      await tx.orderItem.createMany({
+        data: items.map(i => ({
+          orderId,
+          menuItemId: i.menuItemId || i.menuItem || null,
+          itemName: i.name || i.itemName,
+          price: i.price,
+          quantity: i.quantity,
+          status: 'PENDING'
+        }))
+      });
+
+      // Recalculate totals
+      const allItems = await tx.orderItem.findMany({ where: { orderId } });
+      const subtotal = allItems.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+      const gstAmount = subtotal * 0.05;
+      const totalAmount = subtotal + gstAmount;
+
+      const order = await tx.order.update({
+        where: { id: orderId },
+        data: {
+          subtotal,
+          gstAmount,
+          totalAmount,
+          status: 'PENDING' // Set back to pending so KDS sees it
+        },
+        include: { items: true, table: true }
+      });
+
+      return order;
+    });
+
+    const io = req.app.get('io');
+    io.emit('order_updated', { order: result });
+    io.emit('kds_update', { action: 'items_added', order: result });
+
+    res.json({ success: true, data: result });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;

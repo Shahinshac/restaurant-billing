@@ -82,4 +82,28 @@ router.post('/:id/free', async (req, res) => {
   }
 });
 
+// Create table
+router.post('/', async (req, res) => {
+  try {
+    const table = await prisma.table.create({
+      data: req.body
+    });
+    res.status(201).json({ success: true, data: table });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+// Delete table
+router.delete('/:id', async (req, res) => {
+  try {
+    await prisma.table.delete({
+      where: { id: req.params.id }
+    });
+    res.json({ success: true, message: 'Table deleted' });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;

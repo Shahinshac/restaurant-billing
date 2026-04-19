@@ -1,9 +1,8 @@
-"use client";
-
 import { useEffect, useState, use } from "react";
 import api from "@/lib/api";
+import { socket } from "@/lib/socket";
 import toast from "react-hot-toast";
-import { ShoppingBag, Star, ChevronRight, Plus, Flame } from "lucide-react";
+import { ShoppingBag, Star, ChevronRight, Plus, Flame, Clock, CheckCircle2 } from "lucide-react";
 
 export default function DigitalMenu({ params }: { params: Promise<{ tableId: string }> }) {
   const unwrappedParams = use(params);
@@ -18,7 +17,17 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
 
   useEffect(() => {
     fetchData();
-  }, []);
+    
+    socket.on('order_updated', (data) => {
+      if (data.order.tableId === tableId) {
+        fetchData();
+      }
+    });
+
+    return () => {
+      socket.off('order_updated');
+    };
+  }, [tableId]);
 
   const fetchData = async () => {
     try {
@@ -47,7 +56,7 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
       }
       return [...prev, { menuItem: item.id, name: item.name, price: item.price, quantity: 1, isVeg: item.isVeg }];
     });
-    toast.success(`${item.name} added`, { position: 'bottom-center' });
+    toast.success(`${item.name} added`, { position: 'bottom-center', duration: 1000 });
   };
 
   const placeOrder = async () => {
@@ -57,9 +66,14 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
       if (tableInfo.currentOrder) {
         await api.post(`/orders/${tableInfo.currentOrder.id}/add-items`, { items: cart });
       } else {
-        await api.post('/orders', { tableId: tableId, items: cart });
+        await api.post('/orders', { tableId: tableId, orderType: 'DINE_IN', items: cart });
       }
-      toast.success("Order sent to kitchen!", { position: 'bottom-center' });
+      toast.custom((t) => (
+        <div className="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-zinc-900 border border-zinc-800 shadow-2xl animate-in">
+          <Flame className="text-orange-500" size={18} />
+          <span className="text-xs font-bold text-white">Order sent to kitchen!</span>
+        </div>
+      ), { position: 'bottom-center' });
       setCart([]);
       fetchData(); 
     } catch (error) {
@@ -76,12 +90,13 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
   );
 
   const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const currentOrder = tableInfo?.currentOrder;
 
   return (
-    <div className="min-h-screen pb-28 no-scrollbar" style={{ background: 'var(--bg-deep)' }}>
+    <div className="min-h-screen pb-32 no-scrollbar" style={{ background: 'var(--bg-deep)' }}>
       {/* Header */}
       <div className="px-5 pt-8 pb-6 sticky top-0 z-10 rounded-b-3xl"
-        style={{ background: 'var(--glass-heavy)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}
+        style={{ background: 'var(--glass-heavy)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}
       >
         <div className="flex justify-between items-start">
           <div>
@@ -129,6 +144,48 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
           ))}
         </div>
       </div>
+
+      {/* 🚀 Active Order Tracker */}
+      {currentOrder && (
+        <div className="mx-5 mt-6 p-5 rounded-3xl border border-orange-500/20 animate-in"
+          style={{ background: 'rgba(249,115,22,0.03)' }}
+        >
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-orange-500/10 text-orange-500">
+                {currentOrder.status === 'READY' ? <CheckCircle2 size={18} /> : <Clock size={18} className="animate-spin-slow" />}
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-orange-500/60">Active Order</p>
+                <p className="text-xs font-bold text-white uppercase">{currentOrder.status === 'READY' ? 'Ready to serve' : 'Cooking in kitchen'}</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Token</p>
+              <p className="text-xs font-black text-white">#{currentOrder.orderNumber.slice(-3)}</p>
+            </div>
+          </div>
+          
+          <div className="flex -space-x-2 overflow-hidden mb-4">
+             {currentOrder.items.slice(0, 4).map((item: any, i: number) => (
+               <div key={i} className="w-8 h-8 rounded-full border-2 border-zinc-950 flex items-center justify-center bg-zinc-800 text-[10px] uppercase font-bold text-white">
+                 {item.itemName[0]}
+               </div>
+             ))}
+             {currentOrder.items.length > 4 && (
+               <div className="w-8 h-8 rounded-full border-2 border-zinc-950 flex items-center justify-center bg-zinc-700 text-[10px] font-bold text-white">
+                 +{currentOrder.items.length - 4}
+               </div>
+             )}
+          </div>
+
+          <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
+             <div className="h-full bg-orange-500 rounded-full transition-all duration-1000"
+               style={{ width: currentOrder.status === 'READY' ? '100%' : '60%' }}
+             ></div>
+          </div>
+        </div>
+      )}
 
       {/* Menu Items */}
       <div className="p-5 space-y-3">

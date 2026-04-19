@@ -38,6 +38,12 @@ export function Navigation() {
     { href: "/queue", label: "Queue", icon: Users },
   ];
 
+  const adminLinks = [
+    { href: "/admin/menu", label: "Menu Manager", icon: Flame },
+    { href: "/admin/tables", label: "Floor Layout", icon: Map },
+    { href: "/admin/qr", label: "QR Manager", icon: QrCode },
+  ];
+
   return (
     <>
       {/* ═══════ Desktop Sidebar ═══════ */}
@@ -109,6 +115,27 @@ export function Navigation() {
               <QrCode size={20} strokeWidth={1.8} />
               <span className="text-[13px]">QR Codes</span>
             </Link>
+          </div>
+
+          {/* Admin Management */}
+          <div className="pt-8">
+            <p className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] mb-4" style={{ color: 'var(--text-dim)' }}>
+              Management
+            </p>
+            {adminLinks.map((link) => {
+              const isActive = pathname.startsWith(link.href);
+              const Icon = link.icon;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`nav-item group ${isActive ? "nav-item-active" : ""}`}
+                >
+                  <Icon size={20} strokeWidth={isActive ? 2.5 : 1.8} />
+                  <span className="text-[13px]">{link.label}</span>
+                </Link>
+              );
+            })}
           </div>
         </div>
 

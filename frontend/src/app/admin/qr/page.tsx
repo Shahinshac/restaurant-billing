@@ -10,10 +10,11 @@ export default function QRDashboard() {
   const [tables, setTables] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [qrCodes, setQrCodes] = useState<Record<string, string>>({});
+  const [manualBaseUrl, setManualBaseUrl] = useState("");
 
   useEffect(() => {
     fetchTables();
-  }, []);
+  }, [manualBaseUrl]);
 
   const fetchTables = async () => {
     try {
@@ -22,7 +23,7 @@ export default function QRDashboard() {
       setTables(tableData);
       
       const codes: Record<string, string> = {};
-      const baseUrl = window.location.origin;
+      const baseUrl = manualBaseUrl || window.location.origin;
       
       for (const table of tableData) {
         const url = `${baseUrl}/menu/${table.id}`;
@@ -51,7 +52,7 @@ export default function QRDashboard() {
     link.click();
   };
 
-  if (loading) return (
+  if (loading && tables.length === 0) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh]">
       <div className="w-10 h-10 border-[3px] rounded-full animate-spin mb-4"
         style={{ borderColor: 'var(--bg-elevated)', borderTopColor: 'var(--accent)' }}
@@ -75,15 +76,41 @@ export default function QRDashboard() {
             <p className="text-sm font-medium mt-0.5" style={{ color: 'var(--text-tertiary)' }}>Generate table ordering codes</p>
           </div>
         </div>
-        <button 
-          onClick={() => window.print()}
-          className="btn-saanam text-[10px] uppercase tracking-widest"
-          style={{ padding: '12px 20px' }}
-        >
-          <Printer size={14} />
-          Print All
-        </button>
+        
+        <div className="flex flex-col sm:flex-row items-stretch gap-4 w-full md:w-auto">
+          <div className="relative group flex-1 sm:w-80">
+            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5" style={{ color: 'var(--text-dim)' }}>
+              <Activity size={12} />
+            </div>
+            <input 
+              type="text" 
+              placeholder="Local IP Override (e.g. http://192.168.1.5:3000)" 
+              className="input-saanam pl-8 w-full"
+              style={{ padding: '10px 16px 10px 32px', fontSize: '11px', fontStyle: 'italic' }}
+              value={manualBaseUrl}
+              onChange={(e) => setManualBaseUrl(e.target.value)}
+            />
+          </div>
+          <button 
+            onClick={() => window.print()}
+            className="btn-saanam text-[10px] uppercase tracking-widest"
+            style={{ padding: '12px 20px' }}
+          >
+            <Printer size={14} />
+            Print All
+          </button>
+        </div>
       </div>
+
+      {/* Warning if no manual URL on localhost */}
+      {window.location.hostname === 'localhost' && !manualBaseUrl && (
+        <div className="mb-8 p-4 rounded-xl border border-blue-500/20 bg-blue-500/5 flex items-center gap-3">
+          <AlertCircle size={16} className="text-blue-500" />
+          <p className="text-[11px] font-medium text-blue-300">
+            Tip: For QR codes to work on phones, enter your computer's local IP (e.g. http://192.168.1.10:3000) in the field above.
+          </p>
+        </div>
+      )}
 
       {/* QR Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 stagger-children">

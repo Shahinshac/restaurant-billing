@@ -85,6 +85,11 @@ export default function POSPage() {
   const gst = subtotal * 0.05;
   const total = subtotal + gst;
 
+  const handlePrint = () => {
+    if (cart.length === 0) return toast.error("Nothing to print");
+    window.print();
+  };
+
   const handlePlaceOrder = async () => {
     if (cart.length === 0) return toast.error("Cart is empty");
     if (!isTakeaway && !selectedTableId) return toast.error("Please select a table");
@@ -136,6 +141,81 @@ export default function POSPage() {
 
   return (
     <div className="flex h-screen overflow-hidden animate-in" style={{ background: 'var(--bg-deep)' }}>
+      {/* ═══════ Printable Receipt (Hidden) ═══════ */}
+      <div className="hidden print:block print:w-[80mm] print:p-4 text-black bg-white font-mono text-[12px] leading-tight">
+        <div className="text-center mb-4">
+          <h1 className="text-lg font-bold uppercase tracking-tighter">Saanam</h1>
+          <p className="text-[10px]">Restaurant Management Suite</p>
+          <div className="border-b border-dashed border-black my-2"></div>
+          <p className="uppercase font-bold">Bill Receipt</p>
+          <div className="border-b border-dashed border-black my-2"></div>
+        </div>
+
+        <div className="space-y-1 mb-4">
+          <div className="flex justify-between">
+            <span>Date:</span>
+            <span>{new Date().toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Type:</span>
+            <span>{isTakeaway ? 'TAKEAWAY' : 'DINE-IN'}</span>
+          </div>
+          {!isTakeaway && (
+            <div className="flex justify-between font-bold">
+              <span>Table:</span>
+              <span>{tables.find(t => t.id === selectedTableId)?.tableNumber || 'N/A'}</span>
+            </div>
+          )}
+          {isTakeaway && customerDetails.name && (
+            <div className="flex justify-between">
+              <span>Guest:</span>
+              <span className="truncate max-w-[120px]">{customerDetails.name}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="border-b border-dashed border-black mb-2"></div>
+        <div className="grid grid-cols-[1fr_auto_auto] gap-2 mb-2 font-bold">
+          <span>Item</span>
+          <span>Qty</span>
+          <span>Price</span>
+        </div>
+        <div className="border-b border-dashed border-black mb-2"></div>
+
+        <div className="space-y-1 mb-4">
+          {cart.map((item, i) => (
+            <div key={i} className="grid grid-cols-[1fr_auto_auto] gap-2">
+              <span className="truncate">{item.name}</span>
+              <span>x{item.quantity}</span>
+              <span>₹{item.price * item.quantity}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="border-t border-dashed border-black pt-2 space-y-1">
+          <div className="flex justify-between">
+            <span>Subtotal:</span>
+            <span>₹{subtotal.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>GST (5%):</span>
+            <span>₹{gst.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between text-base font-bold">
+            <span>TOTAL:</span>
+            <span>₹{total.toFixed(2)}</span>
+          </div>
+        </div>
+
+        <div className="text-center mt-8 pt-4 border-t border-dashed border-black">
+          <p className="text-[10px] mb-1">Thank you for visiting Saanam!</p>
+          <p className="text-[9px] uppercase tracking-widest">Visit us again</p>
+        </div>
+      </div>
+
+      {/* ═══════ Main UI ═══════ */}
+      <div className="flex-1 flex flex-col min-w-0 print:hidden">
+        {/* ... (rest of the UI) */}
       {/* ═══════ Product Grid ═══════ */}
       <div className="flex-1 flex flex-col min-w-0">
         
@@ -409,16 +489,35 @@ export default function POSPage() {
             </div>
           </div>
 
-          <button 
-            onClick={handlePlaceOrder}
-            disabled={cart.length === 0}
-            className="btn-saanam w-full text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2.5"
-            style={{ padding: '18px 28px' }}
-          >
-            <Flame size={16} />
-            Fire Order
-            <ArrowRight size={14} />
-          </button>
+          <div className="grid grid-cols-2 gap-3">
+            <button 
+              onClick={handlePrint}
+              disabled={cart.length === 0}
+              className="px-6 py-4 rounded-xl flex items-center justify-center gap-2 font-bold text-[11px] uppercase tracking-widest transition-all"
+              style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+            >
+              <Receipt size={16} />
+              Print
+            </button>
+            <button 
+              className="px-6 py-4 rounded-xl flex items-center justify-center gap-2 font-bold text-[11px] uppercase tracking-widest transition-all"
+              style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-dim)' }}
+              onClick={() => setCart([])}
+            >
+              <X size={16} />
+              Hold
+            </button>
+            <button 
+              onClick={handlePlaceOrder}
+              disabled={cart.length === 0}
+              className="btn-saanam col-span-2 text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-2.5"
+              style={{ padding: '18px 28px' }}
+            >
+              <Flame size={16} />
+              Fire Order
+              <ArrowRight size={14} />
+            </button>
+          </div>
         </div>
       </div>
     </div>
