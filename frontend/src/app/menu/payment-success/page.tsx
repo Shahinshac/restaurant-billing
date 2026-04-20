@@ -60,7 +60,7 @@ function PaymentProcessor() {
           </div>
           <div className="text-center">
             <h1 className="text-3xl font-black tracking-tight text-white mb-2">Payment Successful!</h1>
-            <p className="text-sm font-medium text-emerald-400">Your table has been cleared.</p>
+            <p className="text-sm font-medium text-emerald-400">Your bill has been settled!</p>
           </div>
           <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mt-8">Redirecting back to menu...</p>
         </div>

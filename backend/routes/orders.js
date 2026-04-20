@@ -170,13 +170,8 @@ router.post('/:id/pay', async (req, res) => {
 
        let updatedTable = null;
        if (order.tableId) {
-           updatedTable = await tx.table.update({
+           updatedTable = await tx.table.findUnique({
               where: { id: order.tableId },
-              data: {
-                status: 'FREE',
-                currentOrderId: null,
-                occupiedAt: null
-              },
               include: { currentOrder: { include: { items: true } } }
            });
        }
@@ -187,7 +182,7 @@ router.post('/:id/pay', async (req, res) => {
     const io = req.app.get('io');
     io.emit('order_updated', { order: result.order });
     if (result.updatedTable) {
-       io.emit('table_updated', { action: 'freed', table: result.updatedTable });
+       io.emit('table_updated', { action: 'payment_received', table: result.updatedTable });
     }
 
     res.json({ success: true, data: result.order });
