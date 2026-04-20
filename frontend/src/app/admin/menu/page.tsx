@@ -18,10 +18,8 @@ import {
 
 export default function MenuManager() {
   const [menu, setMenu] = useState<any[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState("All");
 
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -74,7 +72,7 @@ export default function MenuManager() {
       setEditingItem(null);
       setFormData({
         name: "",
-        category: categories[1] || "",
+        category: "General",
         price: 0,
         description: "",
         isVeg: true,
@@ -99,10 +97,7 @@ export default function MenuManager() {
         toast.error("Dish name is required");
         return;
       }
-      if (!payload.category.trim()) {
-        toast.error("Category is required");
-        return;
-      }
+      payload.category = "General";
       if (editingItem) {
         await api.put(`/menu/${editingItem.id}`, payload);
         toast.success("Item updated");
@@ -130,9 +125,7 @@ export default function MenuManager() {
   };
 
   const filteredMenu = menu.filter(item => {
-    const matchesCategory = activeCategory === "All" || item.category === activeCategory;
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+    return item.name.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
   if (loading) return (
@@ -184,26 +177,7 @@ export default function MenuManager() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-        {categories.map(cat => (
-          <button 
-            key={cat} 
-            onClick={() => setActiveCategory(cat)}
-            className="px-5 py-2.5 rounded-xl font-bold text-[11px] uppercase tracking-wider transition-all whitespace-nowrap"
-            style={activeCategory === cat ? {
-              background: 'var(--text-primary)',
-              color: 'var(--bg-deep)',
-            } : {
-              background: 'var(--bg-surface)',
-              color: 'var(--text-dim)',
-              border: '1px solid var(--border)'
-            }}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
+
 
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -242,7 +216,6 @@ export default function MenuManager() {
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <div className={`w-2.5 h-2.5 rounded-full border ${item.isVeg ? 'bg-emerald-500 border-emerald-400' : 'bg-rose-500 border-rose-400'}`}></div>
-                <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>{item.category}</span>
               </div>
               <h3 className="text-base font-bold tracking-tight mb-2 truncate" style={{ color: 'var(--text-primary)' }}>{item.name}</h3>
               <p className="text-xs font-medium line-clamp-2 leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>
@@ -290,13 +263,9 @@ export default function MenuManager() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
+                <div className="space-y-2 md:col-span-2">
                   <label className="text-[10px] font-bold uppercase tracking-[0.2em] px-0.5" style={{ color: 'var(--text-dim)' }}>Dish Name</label>
                   <input required type="text" className="input-saanam" placeholder="e.g. Butter Chicken" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-[0.2em] px-0.5" style={{ color: 'var(--text-dim)' }}>Category</label>
-                  <input required type="text" className="input-saanam" placeholder="e.g. Main Course" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} />
                 </div>
               </div>
 

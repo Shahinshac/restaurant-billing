@@ -24,10 +24,8 @@ import {
 } from "lucide-react";
 
 export default function POSTerminal() {
-  const [categories, setCategories] = useState<string[]>([]);
   const [menu, setMenu] = useState<any[]>([]);
   const [tables, setTables] = useState<any[]>([]);
-  const [activeCategory, setActiveCategory] = useState("All");
   const [cart, setCart] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isTakeaway, setIsTakeaway] = useState(false);
@@ -137,14 +135,12 @@ export default function POSTerminal() {
 
   const fetchInitialData = async () => {
     try {
-      const [menuRes, tablesRes, catRes] = await Promise.all([
+      const [menuRes, tablesRes] = await Promise.all([
         api.get('/menu'),
         api.get('/tables'),
-        api.get('/menu/categories')
       ]);
       setMenu(menuRes.data.data);
       setTables(tablesRes.data.data);
-      setCategories(["All", ...catRes.data.data]);
     } catch (error) {
       toast.error("Failed to sync terminal data");
     } finally {
@@ -217,7 +213,7 @@ export default function POSTerminal() {
     }
   };
 
-  const filteredMenu = activeCategory === "All" ? menu : menu.filter(m => m.category === activeCategory);
+  const filteredMenu = menu;
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const gst = subtotal * 0.05;
   const total = subtotal + gst;
@@ -360,24 +356,6 @@ export default function POSTerminal() {
               </div>
             </div>
 
-            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-              {categories.map(cat => (
-                <button 
-                  key={cat} 
-                  onClick={() => setActiveCategory(cat)}
-                  className="px-5 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all whitespace-nowrap"
-                  style={activeCategory === cat ? {
-                    background: 'var(--text-primary)',
-                    color: 'var(--bg-deep)',
-                  } : {
-                    background: 'var(--bg-elevated)',
-                    color: 'var(--text-dim)',
-                  }}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
           </header>
 
           <div className="flex-1 p-6 overflow-y-auto custom-scroll grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 content-start">
@@ -400,7 +378,7 @@ export default function POSTerminal() {
                     <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-700 transform group-hover:scale-110" />
                   ) : (
                     <div className="text-4xl filter grayscale group-hover:grayscale-0 transition-all duration-500 transform group-hover:scale-110">
-                      {item.category?.includes('Drink') ? '🥤' : item.category?.includes('Burger') ? '🍔' : item.category?.includes('Pizza') ? '🍕' : item.category?.includes('Dessert') ? '🍰' : '🍲'}
+                      🍲
                     </div>
                   )}
                   <div className={`absolute top-2.5 left-2.5 w-3 h-3 z-10 shadow-sm border-2 ${item.isVeg ? 'bg-emerald-500 border-emerald-400/30' : 'bg-rose-500 border-rose-400/30'}`}></div>

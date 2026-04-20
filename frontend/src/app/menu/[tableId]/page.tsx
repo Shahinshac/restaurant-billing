@@ -11,9 +11,7 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
   const unwrappedParams = use(params);
   const tableId = unwrappedParams.tableId;
 
-  const [categories, setCategories] = useState<string[]>([]);
   const [menu, setMenu] = useState<any[]>([]);
-  const [activeCategory, setActiveCategory] = useState("All");
   const [cart, setCart] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [tableInfo, setTableInfo] = useState<any>(null);
@@ -36,12 +34,10 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
 
   const fetchData = async () => {
     try {
-      const [cats, items, tableRes] = await Promise.all([
-        api.get('/menu/categories'),
+      const [items, tableRes] = await Promise.all([
         api.get('/menu'),
         api.get(`/tables/${tableId}`)
       ]);
-      setCategories(["All", ...cats.data.data]);
       setMenu(items.data.data);
       setTableInfo(tableRes.data.data);
     } catch (error) {
@@ -51,7 +47,7 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
     }
   };
 
-  const filteredMenu = activeCategory === "All" ? menu : menu.filter(m => m.category === activeCategory);
+  const filteredMenu = menu;
 
   const addToCart = (item: any, selectedPortion: string = 'FULL') => {
     const itemName = selectedPortion === 'FULL' ? item.name : `${item.name} (${selectedPortion})`;
@@ -199,27 +195,6 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
             <ShoppingBag size={20} />
           </div>
         </div>
-        
-        {/* Categories */}
-        <div className="flex gap-2 overflow-x-auto mt-6 pb-1 no-scrollbar">
-          {categories.map(c => (
-            <button 
-              key={c} 
-              onClick={() => setActiveCategory(c)}
-              className="px-5 py-2 rounded-lg font-bold text-[11px] uppercase tracking-wider whitespace-nowrap transition-all"
-              style={activeCategory === c ? {
-                background: 'linear-gradient(135deg, var(--accent), #ea580c)',
-                color: '#fff',
-                boxShadow: '0 4px 16px rgba(249,115,22,0.3)',
-              } : {
-                background: 'var(--bg-elevated)',
-                color: 'var(--text-dim)',
-              }}
-            >
-              {c}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* 🚀 Active Order Tracker */}
@@ -296,7 +271,7 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
       <div className="p-5 space-y-3">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
-            {activeCategory} Menu
+            Our Menu
           </h2>
           <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--accent)' }}>
             {filteredMenu.length} items
