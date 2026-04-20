@@ -41,12 +41,8 @@ export default function MenuManager() {
 
   const fetchData = async () => {
     try {
-      const [menuRes, catRes] = await Promise.all([
-        api.get("/menu?all=true"),
-        api.get("/menu/categories")
-      ]);
+      const menuRes = await api.get("/menu?all=true");
       setMenu(menuRes.data.data);
-      setCategories(["All", ...catRes.data.data]);
     } catch (error) {
       toast.error("Failed to load menu data");
     } finally {
