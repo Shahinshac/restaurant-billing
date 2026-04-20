@@ -62,10 +62,10 @@ export default function Dashboard() {
   );
 
   const metricCards = [
-    { label: "Today's Revenue", value: `₹${stats.revenueToday.toLocaleString()}`, icon: CreditCard, trend: "+12.5%", isUp: true, color: 'var(--accent)', bg: 'var(--accent-soft)' },
-    { label: "Guest Volume", value: stats.totalOrdersToday, icon: Users, trend: "+5.2%", isUp: true, color: '#3b82f6', bg: 'var(--info-soft)' },
-    { label: "Active Tables", value: stats.activeTablesCount, icon: Grid, trend: "Stable", isUp: true, color: '#a855f7', bg: 'rgba(168,85,247,0.1)' },
-    { label: "Avg Wait Time", value: `${stats.avgWaitTime}m`, icon: Clock, trend: "-2m", isUp: false, color: 'var(--success)', bg: 'var(--success-soft)' },
+    { label: "Today's Revenue", value: `₹${stats.revenueToday.toLocaleString()}`, icon: CreditCard, color: 'var(--accent)', bg: 'var(--accent-soft)' },
+    { label: "Guest Volume", value: stats.totalOrdersToday, icon: Users, color: '#3b82f6', bg: 'var(--info-soft)' },
+    { label: "Active Tables", value: stats.activeTablesCount, icon: Grid, color: '#a855f7', bg: 'rgba(168,85,247,0.1)' },
+    { label: "Avg Wait Time", value: `${stats.avgWaitTime}m`, icon: Clock, color: 'var(--success)', bg: 'var(--success-soft)' },
   ];
 
   return (
@@ -100,15 +100,6 @@ export default function Dashboard() {
                 style={{ background: stat.bg, color: stat.color }}
               >
                 <stat.icon size={24} strokeWidth={2} />
-              </div>
-              <div className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg"
-                style={{
-                  background: stat.isUp ? 'var(--success-soft)' : 'var(--danger-soft)',
-                  color: stat.isUp ? 'var(--success)' : 'var(--danger)',
-                }}
-              >
-                {stat.isUp ? <ArrowUpRight size={12} strokeWidth={3} /> : <ArrowDownRight size={12} strokeWidth={3} />}
-                {stat.trend}
               </div>
             </div>
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-2" style={{ color: 'var(--text-dim)' }}>{stat.label}</p>
