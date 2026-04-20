@@ -64,13 +64,13 @@ export default function StatusBoard() {
     }
   };
 
-  const playNotificationSound = () => {
+  const playNotificationSound = async () => {
     try {
       const context = audioContextRef.current;
       if (!context) return;
 
       if (context.state === 'suspended') {
-        context.resume();
+        await context.resume();
       }
       
       const now = context.currentTime;

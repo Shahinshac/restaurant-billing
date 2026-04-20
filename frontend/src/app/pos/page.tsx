@@ -36,6 +36,7 @@ export default function POSTerminal() {
   const [heldOrder, setHeldOrder] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [portionSelectionItem, setPortionSelectionItem] = useState<any>(null);
+  const [printData, setPrintData] = useState<any>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem('pos_held_order');
@@ -56,18 +57,41 @@ export default function POSTerminal() {
     }
   };
 
-  const handleSettlePayment = async (tableId: string) => {
+  const handleSettlePayment = async (tableId: string, paymentMethod: string = 'cash') => {
     const table = tables.find(t => t.id === tableId);
     if (!table || !table.currentOrderId) return;
     
+    // Setup data to print before clearing the table
+    setPrintData({
+      isTakeaway: false,
+      tableNumber: table.tableNumber,
+      customerName: table.currentOrder?.customerName || '',
+      items: table.currentOrder?.items?.map((i: any) => ({
+        name: i.itemName,
+        quantity: i.quantity,
+        price: i.price
+      })) || [],
+      subtotal: table.currentOrder?.subtotal || 0,
+      gst: table.currentOrder?.gstAmount || 0,
+      total: table.currentOrder?.totalAmount || 0
+    });
+    
     try {
       setIsSubmitting(true);
-      await api.post(`/orders/${table.currentOrderId}/pay`, { paymentMethod: 'cash' });
-      toast.success("Payment Settled & Table Freed");
+      await api.post(`/orders/${table.currentOrderId}/pay`, { paymentMethod });
+      toast.success(paymentMethod === 'cash' ? "Payment Settled & Table Freed" : "Marked as Pay After Food");
+      
+      // Delay printing slightly so the react component receives the printData state
+      setTimeout(() => {
+        window.print();
+        setTimeout(() => setPrintData(null), 1000); // clear after printing
+      }, 500);
+      
       setSelectedTableId(null);
       fetchInitialData();
     } catch (error) {
       toast.error("Settlement failed");
+      setPrintData(null);
     } finally {
       setIsSubmitting(false);
     }
@@ -229,20 +253,20 @@ export default function POSTerminal() {
           </div>
           <div className="flex justify-between">
             <span>Type:</span>
-            <span>{isTakeaway ? 'TAKEAWAY' : 'DINE-IN'}</span>
+            <span>{printData ? 'DINE-IN' : (isTakeaway ? 'TAKEAWAY' : 'DINE-IN')}</span>
           </div>
-          {!isTakeaway && (
+          {!(printData?.isTakeaway ?? isTakeaway) && (
             <div className="flex justify-between font-bold">
               <span>Table:</span>
-              <span>{tables.find(t => t.id === selectedTableId)?.tableNumber || 'N/A'}</span>
+              <span>{printData ? printData.tableNumber : (tables.find(t => t.id === selectedTableId)?.tableNumber || 'N/A')}</span>
             </div>
           )}
-          {isTakeaway && customerDetails.name && (
+          {(!printData && isTakeaway && customerDetails.name) || (printData && printData.customerName) ? (
             <div className="flex justify-between">
               <span>Guest:</span>
-              <span className="truncate max-w-[120px]">{customerDetails.name}</span>
+              <span className="truncate max-w-[120px]">{printData ? printData.customerName : customerDetails.name}</span>
             </div>
-          )}
+          ) : null}
         </div>
 
         <div className="border-b border-dashed border-black mb-2"></div>
@@ -254,7 +278,7 @@ export default function POSTerminal() {
         <div className="border-b border-dashed border-black mb-2"></div>
 
         <div className="space-y-1 mb-4">
-          {cart.map((item, i) => (
+          {(printData ? printData.items : cart).map((item: any, i: number) => (
             <div key={i} className="grid grid-cols-[1fr_auto_auto] gap-2">
               <span className="truncate">{item.name}</span>
               <span>x{item.quantity}</span>
@@ -266,15 +290,15 @@ export default function POSTerminal() {
         <div className="border-t border-dashed border-black pt-2 space-y-1">
           <div className="flex justify-between">
             <span>Subtotal:</span>
-            <span>₹{subtotal.toFixed(2)}</span>
+            <span>₹{(printData ? printData.subtotal : subtotal).toFixed(2)}</span>
           </div>
           <div className="flex justify-between">
             <span>GST (5%):</span>
-            <span>₹{gst.toFixed(2)}</span>
+            <span>₹{(printData ? printData.gst : gst).toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-base font-bold">
             <span>TOTAL:</span>
-            <span>₹{total.toFixed(2)}</span>
+            <span>₹{(printData ? printData.total : total).toFixed(2)}</span>
           </div>
         </div>
 
@@ -525,15 +549,26 @@ export default function POSTerminal() {
             {selectedTableId && tables.find(t => t.id === selectedTableId)?.status === 'OCCUPIED' && (
               <div className="space-y-2 mb-2">
                 {tables.find(t => t.id === selectedTableId)?.currentOrder?.paymentStatus === 'unpaid' && (
-                  <button 
-                    onClick={() => handleSettlePayment(selectedTableId)}
-                    disabled={isSubmitting}
-                    className="w-full btn-saanam flex items-center justify-center gap-2.5 py-4"
-                    style={{ background: 'var(--success)', color: '#fff', border: 'none' }}
-                  >
-                    <CheckCircle2 size={18} />
-                    Settle Cash (₹{tables.find(t => t.id === selectedTableId)?.currentOrder?.totalAmount})
-                  </button>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => handleSettlePayment(selectedTableId, 'cash')}
+                      disabled={isSubmitting}
+                      className="flex-1 btn-saanam flex items-center justify-center gap-2 py-4"
+                      style={{ background: 'var(--success)', color: '#fff', border: 'none' }}
+                    >
+                      <CheckCircle2 size={16} />
+                      Settle Cash
+                    </button>
+                    <button 
+                      onClick={() => handleSettlePayment(selectedTableId, 'pay_after_food')}
+                      disabled={isSubmitting}
+                      className="flex-1 btn-saanam flex items-center justify-center gap-2 py-4"
+                      style={{ background: 'var(--warning)', color: '#fff', border: 'none' }}
+                    >
+                      <Clock size={16} />
+                      Pay After Food
+                    </button>
+                  </div>
                 )}
                 <button 
                   onClick={() => handleClearTable(selectedTableId)}
