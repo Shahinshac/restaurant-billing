@@ -37,6 +37,7 @@ export default function POSTerminal() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [portionSelectionItem, setPortionSelectionItem] = useState<any>(null);
   const [printData, setPrintData] = useState<any>(null);
+  const [billRequestedTableId, setBillRequestedTableId] = useState<string | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem('pos_held_order');
@@ -57,7 +58,7 @@ export default function POSTerminal() {
     }
   };
 
-  const handleSettlePayment = async (tableId: string, paymentMethod: string = 'cash') => {
+  const handleSettlePayment = async (tableId: string) => {
     const table = tables.find(t => t.id === tableId);
     if (!table || !table.currentOrderId) return;
     
@@ -78,8 +79,8 @@ export default function POSTerminal() {
     
     try {
       setIsSubmitting(true);
-      await api.post(`/orders/${table.currentOrderId}/pay`, { paymentMethod });
-      toast.success(paymentMethod === 'cash' ? "Payment Settled & Table Freed" : "Marked as Pay After Food");
+      await api.post(`/orders/${table.currentOrderId}/pay`, { paymentMethod: 'cash' });
+      toast.success("Payment Settled & Table Freed");
       
       // Delay printing slightly so the react component receives the printData state
       setTimeout(() => {
@@ -88,6 +89,7 @@ export default function POSTerminal() {
       }, 500);
       
       setSelectedTableId(null);
+      setBillRequestedTableId(null);
       fetchInitialData();
     } catch (error) {
       toast.error("Settlement failed");
@@ -394,10 +396,14 @@ export default function POSTerminal() {
                 <div className="relative aspect-[4/3] mb-4 rounded-xl overflow-hidden flex items-center justify-center"
                   style={{ background: 'var(--bg-elevated)' }}
                 >
-                  <div className="text-4xl filter grayscale group-hover:grayscale-0 transition-all duration-500 transform group-hover:scale-110">
-                    {item.category?.includes('Drink') ? '🥤' : item.category?.includes('Burger') ? '🍔' : item.category?.includes('Pizza') ? '🍕' : item.category?.includes('Dessert') ? '🍰' : '🍲'}
-                  </div>
-                  <div className={`absolute top-2.5 left-2.5 w-3 h-3 rounded-full border-2 ${item.isVeg ? 'bg-emerald-500 border-emerald-400/30' : 'bg-rose-500 border-rose-400/30'}`}></div>
+                  {item.image ? (
+                    <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-700 transform group-hover:scale-110" />
+                  ) : (
+                    <div className="text-4xl filter grayscale group-hover:grayscale-0 transition-all duration-500 transform group-hover:scale-110">
+                      {item.category?.includes('Drink') ? '🥤' : item.category?.includes('Burger') ? '🍔' : item.category?.includes('Pizza') ? '🍕' : item.category?.includes('Dessert') ? '🍰' : '🍲'}
+                    </div>
+                  )}
+                  <div className={`absolute top-2.5 left-2.5 w-3 h-3 z-10 shadow-sm border-2 ${item.isVeg ? 'bg-emerald-500 border-emerald-400/30' : 'bg-rose-500 border-rose-400/30'}`}></div>
                 </div>
                 
                 <div className="flex-1">
@@ -549,26 +555,29 @@ export default function POSTerminal() {
             {selectedTableId && tables.find(t => t.id === selectedTableId)?.status === 'OCCUPIED' && (
               <div className="space-y-2 mb-2">
                 {tables.find(t => t.id === selectedTableId)?.currentOrder?.paymentStatus === 'unpaid' && (
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => handleSettlePayment(selectedTableId, 'cash')}
-                      disabled={isSubmitting}
-                      className="flex-1 btn-saanam flex items-center justify-center gap-2 py-4"
-                      style={{ background: 'var(--success)', color: '#fff', border: 'none' }}
-                    >
-                      <CheckCircle2 size={16} />
-                      Settle Cash
-                    </button>
-                    <button 
-                      onClick={() => handleSettlePayment(selectedTableId, 'pay_after_food')}
-                      disabled={isSubmitting}
-                      className="flex-1 btn-saanam flex items-center justify-center gap-2 py-4"
-                      style={{ background: 'var(--warning)', color: '#fff', border: 'none' }}
-                    >
-                      <Clock size={16} />
-                      Pay After Food
-                    </button>
-                  </div>
+                  <>
+                    {billRequestedTableId !== selectedTableId ? (
+                      <button 
+                        onClick={() => setBillRequestedTableId(selectedTableId)}
+                        disabled={isSubmitting}
+                        className="w-full btn-saanam flex items-center justify-center gap-2 py-4"
+                        style={{ background: 'var(--warning)', color: '#fff', border: 'none' }}
+                      >
+                        <Clock size={16} />
+                        Pay After Food
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => handleSettlePayment(selectedTableId)}
+                        disabled={isSubmitting}
+                        className="w-full btn-saanam flex items-center justify-center gap-2 py-4"
+                        style={{ background: 'var(--success)', color: '#fff', border: 'none' }}
+                      >
+                        <CheckCircle2 size={16} />
+                        Settle Cash
+                      </button>
+                    )}
+                  </>
                 )}
                 <button 
                   onClick={() => handleClearTable(selectedTableId)}

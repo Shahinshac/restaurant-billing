@@ -301,4 +301,33 @@ router.post('/:id/add-items', async (req, res) => {
   }
 });
 
+// Create Razorpay Order
+router.post('/:id/create-razorpay-order', async (req, res) => {
+  try {
+    const order = await prisma.order.findUnique({ where: { id: req.params.id } });
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+    
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+      return res.status(500).json({ success: false, message: 'Razorpay is not configured in backend environment.' });
+    }
+    
+    const Razorpay = require('razorpay');
+    const razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+
+    const options = {
+      amount: Math.round(order.totalAmount * 100),
+      currency: "INR",
+      receipt: `rcpt_${order.orderNumber}`
+    };
+
+    const razorpayOrder = await razorpay.orders.create(options);
+    res.json({ success: true, razorpayOrder });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;

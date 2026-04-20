@@ -34,6 +34,7 @@ export default function MenuManager() {
     isAvailable: true,
     prepTime: 10,
     hasPortions: false,
+    image: "",
   });
 
   useEffect(() => {
@@ -67,6 +68,7 @@ export default function MenuManager() {
         isAvailable: item.isAvailable,
         prepTime: item.prepTime || 10,
         hasPortions: item.hasPortions || false,
+        image: item.image || "",
       });
     } else {
       setEditingItem(null);
@@ -79,6 +81,7 @@ export default function MenuManager() {
         isAvailable: true,
         prepTime: 10,
         hasPortions: false,
+        image: "",
       });
     }
     setShowModal(true);
@@ -193,11 +196,17 @@ export default function MenuManager() {
         {filteredMenu.map(item => (
           <div key={item.id} className="glow-card group p-6 flex flex-col h-full animate-in">
             <div className="flex justify-between items-start mb-6">
-              <div className="p-3.5 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110"
-                style={{ background: 'var(--bg-elevated)', color: 'var(--text-dim)' }}
-              >
-                <ImageIcon size={24} />
-              </div>
+              {item.image ? (
+                <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-sm border border-white/10 group-hover:scale-110 transition-all">
+                  <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="p-3.5 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110"
+                  style={{ background: 'var(--bg-elevated)', color: 'var(--text-dim)' }}
+                >
+                  <ImageIcon size={24} />
+                </div>
+              )}
               <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-y-1 group-hover:translate-y-0">
                 <button 
                   onClick={() => handleOpenModal(item)}
@@ -275,6 +284,43 @@ export default function MenuManager() {
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-[0.2em] px-0.5" style={{ color: 'var(--text-dim)' }}>Category</label>
                   <input required type="text" className="input-saanam" placeholder="e.g. Main Course" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-[0.2em] px-0.5" style={{ color: 'var(--text-dim)' }}>Food Photo (Optional)</label>
+                <div className="flex items-center gap-4">
+                  {formData.image && (
+                    <div className="w-14 h-14 rounded-2xl overflow-hidden border border-white/10 shrink-0 shadow-sm relative group">
+                      <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                      <button type="button" onClick={() => setFormData({...formData, image: ""})} className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all text-white">
+                        <X size={16} />
+                      </button>
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <label className="cursor-pointer flex items-center justify-center gap-2 border border-dashed border-white/20 rounded-2xl p-4 hover:border-orange-500/50 hover:bg-orange-500/5 transition-all text-xs font-bold text-zinc-400 hover:text-orange-500">
+                      <ImageIcon size={16} />
+                      {formData.image ? "Change Photo" : "Upload Photo"}
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                             if (file.size > 2 * 1024 * 1024) {
+                               toast.error("Image must be less than 2MB");
+                               return;
+                             }
+                             const reader = new FileReader();
+                             reader.onloadend = () => setFormData({...formData, image: reader.result as string});
+                             reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
                 </div>
               </div>
 

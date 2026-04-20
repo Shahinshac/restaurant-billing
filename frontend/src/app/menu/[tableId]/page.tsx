@@ -4,7 +4,8 @@ import { useEffect, useState, use } from "react";
 import api from "@/lib/api";
 import { socket } from "@/lib/socket";
 import toast from "react-hot-toast";
-import { ShoppingBag, Star, ChevronRight, Plus, Minus, Flame, Clock, CheckCircle2, X } from "lucide-react";
+import Script from "next/script";
+import { ShoppingBag, Star, ChevronRight, Plus, Minus, Flame, Clock, CheckCircle2, X, CreditCard } from "lucide-react";
 
 export default function DigitalMenu({ params }: { params: Promise<{ tableId: string }> }) {
   const unwrappedParams = use(params);
@@ -17,6 +18,7 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
   const [loading, setLoading] = useState(true);
   const [tableInfo, setTableInfo] = useState<any>(null);
   const [portionSelectionItem, setPortionSelectionItem] = useState<any>(null);
+  const [isPaying, setIsPaying] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -106,6 +108,51 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
     }
   };
 
+  const currentOrder = tableInfo?.currentOrder;
+
+  const handleRazorpayPayment = async () => {
+    if (!currentOrder || isPaying) return;
+    setIsPaying(true);
+    try {
+      const res = await api.post(`/orders/${currentOrder.id}/create-razorpay-order`);
+      if (res.data.success && res.data.razorpayOrder) {
+        const orderInfo = res.data.razorpayOrder;
+        
+        const options = {
+          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_SfctuU5SK2mJUs', 
+          amount: orderInfo.amount, 
+          currency: orderInfo.currency,
+          name: "26:07",
+          description: `Bill Settlement - ${currentOrder.orderNumber}`,
+          order_id: orderInfo.id, 
+          handler: function (response: any) {
+            window.location.href = `/menu/payment-success?order_id=${currentOrder.id}&table_id=${tableId}`;
+          },
+          prefill: {
+             name: currentOrder.customerName || "Dine-in Guest",
+             contact: currentOrder.customerPhone || "",
+          },
+          theme: {
+             color: "#f97316"
+          }
+        };
+
+        const rzp1 = new (window as any).Razorpay(options);
+        rzp1.on('payment.failed', function (response: any){
+             toast.error("Payment Failed");
+             setIsPaying(false);
+        });
+        rzp1.open();
+      } else {
+        toast.error("Failed to initialize checkout.");
+        setIsPaying(false);
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Razorpay not configured on server.");
+      setIsPaying(false);
+    }
+  };
+
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen" style={{ background: 'var(--bg-deep)' }}>
       <div className="w-8 h-8 border-[3px] rounded-full animate-spin"
@@ -115,10 +162,10 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
   );
 
   const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const currentOrder = tableInfo?.currentOrder;
 
   return (
     <div className="min-h-screen pb-32 no-scrollbar" style={{ background: 'var(--bg-deep)' }}>
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       {/* Header */}
       <div className="px-5 pt-8 pb-6 sticky top-0 z-10 rounded-b-3xl"
         style={{ background: 'var(--glass-heavy)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}
@@ -204,11 +251,39 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
              )}
           </div>
 
-          <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
+          <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden mb-5">
              <div className="h-full bg-orange-500 rounded-full transition-all duration-1000"
                style={{ width: currentOrder.status === 'READY' ? '100%' : '60%' }}
              ></div>
           </div>
+          
+          <div className="pt-5 border-t border-orange-500/10">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-400">Total Bill</span>
+              <span className="text-xl font-black text-white">₹{currentOrder.totalAmount.toFixed(2)}</span>
+            </div>
+            {currentOrder.paymentStatus !== 'paid' && (
+              <button 
+                onClick={handleRazorpayPayment}
+                disabled={isPaying}
+                className="w-full py-4 rounded-xl flex items-center justify-center gap-2 font-bold transition-all active:scale-[0.98]"
+                style={{ background: '#3395FF', color: 'white' }}
+              >
+                {isPaying ? (
+                   <Clock size={18} className="animate-spin" />
+                ) : (
+                   <CreditCard size={18} />
+                )}
+                {isPaying ? 'Connecting to Razorpay...' : 'Pay with Razorpay'}
+              </button>
+            )}
+            {currentOrder.paymentStatus === 'paid' && (
+              <div className="w-full py-3.5 rounded-xl flex items-center justify-center gap-2 font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                <CheckCircle2 size={18} />
+                Bill Paid
+              </div>
+            )}
+           </div>
         </div>
       )}
 
@@ -227,6 +302,11 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
           <div key={item.id} className="flex gap-4 p-4 rounded-2xl transition-all active:scale-[0.98]"
             style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
           >
+            {item.image && (
+              <div className="w-[72px] h-[72px] shrink-0 rounded-2xl overflow-hidden shadow-sm border border-white/5">
+                <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <div className={`w-2.5 h-2.5 rounded-sm border ${item.isVeg ? 'bg-emerald-500 border-emerald-400' : 'bg-rose-500 border-rose-400'}`}></div>
