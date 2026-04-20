@@ -272,13 +272,12 @@ export default function MenuManager() {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 animate-in"
+        <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 md:p-6 animate-in overflow-y-auto custom-scroll"
           style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(12px)' }}
         >
-          <div className="glass-card w-full max-w-xl p-8 md:p-10 relative animate-scale-in"
-            style={{ maxHeight: '90vh', overflowY: 'auto' }}
+          <div className="glass-card w-full max-w-xl p-6 md:p-10 relative animate-scale-in shrink-0 m-auto my-8 md:my-auto"
           >
-            <button onClick={() => setShowModal(false)} className="absolute top-8 right-8 transition-all hover:opacity-60" style={{ color: 'var(--text-dim)' }}>
+            <button type="button" onClick={() => setShowModal(false)} className="absolute top-6 right-6 md:top-8 md:right-8 transition-all hover:opacity-60" style={{ color: 'var(--text-dim)' }}>
               <X size={22} />
             </button>
 
