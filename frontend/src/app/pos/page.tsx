@@ -20,8 +20,11 @@ import {
   Receipt,
   Flame,
   X,
-  AlertCircle
+  AlertCircle,
+  Bell,
+  BellOff
 } from "lucide-react";
+import { notifier } from "@/lib/notifications";
 
 export default function POSTerminal() {
   const [menu, setMenu] = useState<any[]>([]);
@@ -139,20 +142,46 @@ export default function POSTerminal() {
     }
   };
 
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+
   useEffect(() => {
+    // Attempt silent init on first interaction
+    const initNotifier = () => {
+      if (!notifier.initialized) {
+        notifier.initialize();
+        setNotificationsEnabled(true);
+      }
+    };
+    window.addEventListener('click', initNotifier, { once: true });
+
     fetchInitialData();
 
     socket.on('table_updated', (data) => {
       setTables(prev => prev.map(t => t.id === data.table.id ? data.table : t));
     });
 
-    socket.on('order_updated', () => {
+    socket.on('order_created', (data: any) => {
+      if (data.order.status === 'PENDING_APPROVAL') {
+        notifier.playPOSChime();
+        notifier.sendPushNotification('New QR Order', `Approval required for Table ${data.order.tableNumber}`);
+      }
+      fetchInitialData();
+    });
+
+    socket.on('order_updated', (data: any) => {
+      if (data.order?.status === 'PENDING_APPROVAL') {
+         // for existing orders adding items
+         notifier.playPOSChime();
+         notifier.sendPushNotification('Add-on Order', `Table ${data.order.tableNumber} added items`);
+      }
       fetchInitialData();
     });
 
     return () => {
       socket.off('table_updated');
+      socket.off('order_created');
       socket.off('order_updated');
+      window.removeEventListener('click', initNotifier);
     };
   }, []);
 
@@ -348,6 +377,17 @@ export default function POSTerminal() {
               </div>
 
               <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => {
+                    notifier.initialize();
+                    setNotificationsEnabled(true);
+                    toast.success("Notifications Enabled");
+                  }}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-zinc-800/50"
+                  style={{ color: notificationsEnabled ? 'var(--success)' : 'var(--text-dim)' }}
+                >
+                  {notificationsEnabled ? <Bell size={18} /> : <BellOff size={18} />}
+                </button>
                 <div className="p-1 rounded-xl flex" style={{ background: 'var(--bg-elevated)' }}>
                   <button 
                     onClick={() => setIsTakeaway(false)}

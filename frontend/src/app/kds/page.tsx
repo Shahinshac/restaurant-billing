@@ -5,14 +5,23 @@ import api from "@/lib/api";
 import { socket } from "@/lib/socket";
 import toast from "react-hot-toast";
 import { formatDistanceToNow } from "date-fns";
-import { Check, Clock, ChefHat, Activity, Maximize2, Minimize2, Flame } from "lucide-react";
+import { Check, Clock, ChefHat, Activity, Maximize2, Minimize2, Flame, Bell, BellOff } from "lucide-react";
+import { notifier } from "@/lib/notifications";
 
 export default function KDSPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [wallMode, setWallMode] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
   useEffect(() => {
+    const initNotifier = () => {
+      if (!notifier.initialized) {
+        notifier.initialize();
+        setNotificationsEnabled(true);
+      }
+    };
+    window.addEventListener('click', initNotifier, { once: true });
     fetchOrders();
     
     socket.on('kds_update', handleOrderUpdate);
@@ -32,8 +41,14 @@ export default function KDSPage() {
     }
   };
 
-  const handleOrderUpdate = () => {
+  const handleOrderUpdate = (data?: any) => {
     fetchOrders();
+    if (data?.action === 'new_order' || data?.action === 'status_change') {
+       if (data.order?.status === 'PENDING') {
+         notifier.playKDSBell();
+         notifier.sendPushNotification('New Kitchen Order', `Cooking required for Table ${data.order.tableNumber}`);
+       }
+    }
   };
 
   const updateItemStatus = async (orderId: string, itemIndex: number, newStatus: string) => {
@@ -96,6 +111,21 @@ export default function KDSPage() {
             </div>
           </div>
           
+          <button 
+            onClick={() => {
+              notifier.initialize();
+              setNotificationsEnabled(true);
+              toast.success("KDS Audio Enabled");
+            }}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl transition-all"
+            style={{ 
+              background: notificationsEnabled ? 'var(--success-soft)' : 'var(--bg-elevated)',
+              color: notificationsEnabled ? 'var(--success)' : 'var(--text-dim)',
+              border: notificationsEnabled ? '1px solid rgba(34,197,94,0.2)' : '1px solid var(--border)'
+            }}
+          >
+            {notificationsEnabled ? <Bell size={16} /> : <BellOff size={16} />}
+          </button>
           <button 
             onClick={() => setWallMode(true)}
             className="btn-saanam text-[10px] uppercase tracking-widest"
