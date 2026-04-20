@@ -242,8 +242,8 @@ export default function POSTerminal() {
         orderType: isTakeaway ? 'TAKEAWAY' : 'DINE_IN',
         customerName: customerDetails.name,
         customerPhone: customerDetails.phone,
-        paymentStatus: 'unpaid',
-        paymentMethod: 'pending',
+        paymentStatus: isTakeaway ? 'paid' : 'unpaid',
+        paymentMethod: isTakeaway ? 'cash' : 'pending',
         items: cart.map(i => ({
           menuItemId: i.id,
           name: i.name,
@@ -711,7 +711,7 @@ export default function POSTerminal() {
                 style={{ padding: '18px 28px' }}
               >
                 <Flame size={16} />
-                Fire Order
+                {isTakeaway ? 'Settle & Fire' : 'Fire Order'}
                 <ArrowRight size={14} />
               </button>
             </div>

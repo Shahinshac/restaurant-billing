@@ -279,7 +279,7 @@ export default function InvoicesPage() {
                   </td>
                   <td className="px-6 py-5 text-center">
                     <div className="flex items-center justify-center gap-2">
-                      {order.paymentStatus === 'unpaid' && (
+                      {order.paymentStatus === 'unpaid' && order.orderType === 'DINE_IN' && (
                         <button 
                           onClick={() => handleSettleOrder(order.id)}
                           disabled={isSubmitting}
