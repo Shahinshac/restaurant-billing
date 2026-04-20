@@ -28,10 +28,12 @@ export default function StatusBoard() {
     // Initial join check
     if (localStorage.getItem('status_board_joined') === 'true') {
       setIsOverlayVisible(false);
-      // We still need a click to resume AudioContext usually, 
-      // but we'll try to resume when the user interacts with the page elsewhere.
+      // Modern browsers block AudioContext creation without user interaction.
+      // If they bypass the start modal, hook onto their very first click anywhere on the page to silently boot the audio engine.
       const resume = () => {
-        if (audioContextRef.current?.state === 'suspended') {
+        if (!audioContextRef.current) {
+          handleStart();
+        } else if (audioContextRef.current.state === 'suspended') {
           audioContextRef.current.resume();
         }
         window.removeEventListener('click', resume);
@@ -48,6 +50,7 @@ export default function StatusBoard() {
 
   const handleStart = async () => {
     setIsOverlayVisible(false);
+    localStorage.setItem('status_board_joined', 'true');
     try {
       const AudioContextClass = (window.AudioContext || (window as any).webkitAudioContext);
       if (AudioContextClass) {

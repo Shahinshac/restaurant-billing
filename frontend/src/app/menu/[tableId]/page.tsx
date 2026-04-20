@@ -87,9 +87,9 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
 
     try {
       if (tableInfo.currentOrder) {
-        await api.post(`/orders/${tableInfo.currentOrder.id}/add-items`, { items: cart });
+        await api.post(`/orders/${tableInfo.currentOrder.id}/add-items`, { items: cart, status: 'PENDING_APPROVAL' });
       } else {
-        await api.post('/orders', { tableId: tableId, orderType: 'DINE_IN', items: cart });
+        await api.post('/orders', { tableId: tableId, orderType: 'DINE_IN', items: cart, status: 'PENDING_APPROVAL' });
       }
       toast.custom((t) => (
         <div className="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-zinc-900 border border-zinc-800 shadow-2xl animate-in">
@@ -209,7 +209,7 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
               </div>
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-orange-500/60">Active Order</p>
-                <p className="text-xs font-bold text-white uppercase">{currentOrder.status === 'READY' ? 'Ready to serve' : 'Cooking in kitchen'}</p>
+                <p className="text-xs font-bold text-white uppercase">{currentOrder.status === 'READY' ? 'Ready to serve' : currentOrder.status === 'PENDING_APPROVAL' ? 'Waiting for Waiter' : 'Cooking in kitchen'}</p>
               </div>
             </div>
             <div className="text-right">
@@ -233,7 +233,7 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
 
           <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden mb-5">
              <div className="h-full bg-orange-500 rounded-full transition-all duration-1000"
-               style={{ width: currentOrder.status === 'READY' ? '100%' : '60%' }}
+               style={{ width: currentOrder.status === 'READY' ? '100%' : currentOrder.status === 'PENDING_APPROVAL' ? '30%' : '60%' }}
              ></div>
           </div>
           

@@ -116,6 +116,29 @@ export default function POSTerminal() {
     localStorage.removeItem('pos_held_order');
   };
 
+  const handleApproveOrder = async (orderId: string) => {
+    try {
+      await api.patch(`/orders/${orderId}/status`, { status: 'PENDING' });
+      toast.success("Order Approved via POS");
+      fetchInitialData();
+    } catch {
+      toast.error("Failed to approve order");
+    }
+  };
+
+  const handleRejectOrder = async (tableId: string | null, orderId: string) => {
+    try {
+      await api.patch(`/orders/${orderId}/status`, { status: 'CANCELLED' });
+      if (tableId) {
+        await api.post(`/tables/${tableId}/clear`);
+      }
+      toast.success("Order Rejected & Table Cleared");
+      fetchInitialData();
+    } catch {
+      toast.error("Failed to reject order");
+    }
+  };
+
   useEffect(() => {
     fetchInitialData();
 
@@ -462,7 +485,41 @@ export default function POSTerminal() {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-5 gap-2">
+              <div className="space-y-4">
+                {tables.filter(t => t.currentOrder?.status === 'PENDING_APPROVAL').length > 0 && (
+                  <div className="mb-6 p-4 rounded-2xl border border-blue-500/30 bg-blue-500/5">
+                    <h3 className="text-sm font-bold text-blue-500 mb-3 flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+                      Pending Approvals (QR Orders)
+                    </h3>
+                    <div className="flex flex-col gap-3">
+                      {tables.filter(t => t.currentOrder?.status === 'PENDING_APPROVAL').map(table => (
+                        <div key={table.id} className="flex justify-between items-center bg-white dark:bg-zinc-900 border border-blue-500/20 p-3 rounded-xl shadow-sm">
+                          <div>
+                            <p className="font-bold text-sm">Table {table.tableNumber} <span className="text-blue-500 ml-1">#{table.currentOrder?.orderNumber.slice(-4)}</span></p>
+                            <p className="text-[10px] uppercase tracking-widest text-zinc-500 mt-1">{table.currentOrder?.items?.length} Items • ₹{table.currentOrder?.totalAmount.toFixed(2)}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button 
+                              onClick={() => handleRejectOrder(table.id, table.currentOrder!.id)}
+                              className="px-4 py-2 rounded-lg bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-500 text-[10px] font-bold uppercase tracking-widest hover:bg-red-100 transition-colors"
+                            >
+                              Reject
+                            </button>
+                            <button 
+                              onClick={() => handleApproveOrder(table.currentOrder!.id)}
+                              className="px-4 py-2 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-500 border border-blue-500/20 text-[10px] font-bold uppercase tracking-widest hover:bg-blue-100 transition-colors"
+                            >
+                              Approve
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="grid grid-cols-5 gap-2">
                 {tables.map(table => {
                   const isOccupied = table.status === 'OCCUPIED' || table.status === 'RESERVED';
                   return (
@@ -493,6 +550,7 @@ export default function POSTerminal() {
                     </button>
                   );
                 })}
+              </div>
               </div>
             )}
           </div>

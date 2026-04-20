@@ -76,7 +76,7 @@ router.get('/:id', async (req, res) => {
 // Create order + items using transaction
 router.post('/', async (req, res) => {
   try {
-    const { tableId, items, notes, orderType, customerName, customerPhone, customerEmail } = req.body;
+    const { tableId, items, notes, orderType, customerName, customerPhone, customerEmail, status } = req.body;
     
     // Calculate total
     const subtotal = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
@@ -101,6 +101,7 @@ router.post('/', async (req, res) => {
            customerName: customerName || '',
            customerPhone: customerPhone || '',
            customerEmail: customerEmail || '',
+           status: status || 'PENDING',
            paymentStatus: req.body.paymentStatus || 'unpaid',
            paymentMethod: req.body.paymentMethod || 'pending',
            tableId: tableId || null,
@@ -250,7 +251,7 @@ router.patch('/:orderId/items/:itemId/status', async (req, res) => {
 // Add items to existing order
 router.post('/:id/add-items', async (req, res) => {
   try {
-    const { items } = req.body;
+    const { items, status } = req.body;
     const orderId = req.params.id;
 
     const result = await prisma.$transaction(async (tx) => {
@@ -262,7 +263,7 @@ router.post('/:id/add-items', async (req, res) => {
           itemName: i.name || i.itemName,
           price: i.price,
           quantity: i.quantity,
-          status: 'PENDING'
+          status: status || 'PENDING'
         }))
       });
 
@@ -278,7 +279,7 @@ router.post('/:id/add-items', async (req, res) => {
           subtotal,
           gstAmount,
           totalAmount,
-          status: 'PENDING' // Set back to pending so KDS sees it
+          status: status || 'PENDING'
         },
         include: { items: true, table: true }
       });
