@@ -4,8 +4,9 @@ const prisma = require('../db');
 
 router.get('/', async (req, res) => {
   try {
-    const { category } = req.query;
-    const filter = { isAvailable: true };
+    const { category, all } = req.query;
+    const filter = {};
+    if (!all) filter.isAvailable = true;
     if (category && category !== 'All') filter.category = category;
 
     const menu = await prisma.menuItem.findMany({

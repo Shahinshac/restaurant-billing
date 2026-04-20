@@ -44,7 +44,7 @@ export default function MenuManager() {
   const fetchData = async () => {
     try {
       const [menuRes, catRes] = await Promise.all([
-        api.get("/menu"),
+        api.get("/menu?all=true"),
         api.get("/menu/categories")
       ]);
       setMenu(menuRes.data.data);
@@ -90,17 +90,31 @@ export default function MenuManager() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const payload = {
+        ...formData,
+        price: parseFloat(String(formData.price)) || 0,
+        prepTime: parseInt(String(formData.prepTime)) || 10,
+      };
+      if (!payload.name.trim()) {
+        toast.error("Dish name is required");
+        return;
+      }
+      if (!payload.category.trim()) {
+        toast.error("Category is required");
+        return;
+      }
       if (editingItem) {
-        await api.put(`/menu/${editingItem.id}`, formData);
+        await api.put(`/menu/${editingItem.id}`, payload);
         toast.success("Item updated");
       } else {
-        await api.post("/menu", formData);
+        await api.post("/menu", payload);
         toast.success("Item created");
       }
       setShowModal(false);
       fetchData();
-    } catch (error) {
-      toast.error("Operation failed");
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || "Something went wrong";
+      toast.error(msg);
     }
   };
 
