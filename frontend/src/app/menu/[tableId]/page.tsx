@@ -134,6 +134,11 @@ export default function DigitalMenu({ params }: { params: Promise<{ tableId: str
           },
           theme: {
              color: "#f97316"
+          },
+          modal: {
+            ondismiss: function() {
+              setIsPaying(false);
+            }
           }
         };
 
