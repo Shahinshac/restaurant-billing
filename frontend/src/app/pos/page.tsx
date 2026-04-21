@@ -163,7 +163,6 @@ export default function POSTerminal() {
     socket.on('order_created', (data: any) => {
       if (data.order.status === 'PENDING_APPROVAL') {
         notifier.playPOSChime();
-        notifier.sendPushNotification('New QR Order', `Approval required for Table ${data.order.tableNumber}`);
       }
       fetchInitialData();
     });
@@ -172,7 +171,6 @@ export default function POSTerminal() {
       if (data.order?.status === 'PENDING_APPROVAL') {
          // for existing orders adding items
          notifier.playPOSChime();
-         notifier.sendPushNotification('Add-on Order', `Table ${data.order.tableNumber} added items`);
       }
       fetchInitialData();
     });

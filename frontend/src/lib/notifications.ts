@@ -7,7 +7,7 @@ class NotificationSystem {
   public async initialize() {
     if (typeof window === 'undefined') return;
 
-    // 1. Initialize Audio Context
+    // Initialize Audio Context
     try {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       if (AudioContextClass && !this.audioContext) {
@@ -19,13 +19,6 @@ class NotificationSystem {
       this.initialized = true;
     } catch (e) {
       console.error("Audio init failed", e);
-    }
-
-    // 2. Request Push Notification Permission
-    if ('Notification' in window) {
-      if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
-        await Notification.requestPermission();
-      }
     }
   }
 
@@ -45,11 +38,23 @@ class NotificationSystem {
     ]);
   }
 
+  // Classic "Ding-Dong" for the Public Status Board
+  public playStatusBoardChime() {
+    this.playTonalChime([
+      { freq: 783.99, start: 0, duration: 0.8, vol: 0.6 }, // G5
+      { freq: 523.25, start: 0.4, duration: 1.2, vol: 0.6 } // C5
+    ]);
+  }
+
   private async playTonalChime(notes: { freq: number, start: number, duration: number, vol: number }[]) {
     if (!this.audioContext) return;
     
     if (this.audioContext.state === 'suspended') {
-      await this.audioContext.resume();
+      try {
+        await this.audioContext.resume();
+      } catch (e) {
+        console.warn("Could not resume audio context", e);
+      }
     }
 
     const now = this.audioContext.currentTime;
@@ -71,15 +76,6 @@ class NotificationSystem {
       osc.start(now + note.start);
       osc.stop(now + note.start + note.duration);
     });
-  }
-
-  public sendPushNotification(title: string, body: string) {
-    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-      new Notification(title, {
-        body,
-        icon: '/globe.svg' // We use a generic icon available in Next.js public by default
-      });
-    }
   }
 }
 

@@ -46,7 +46,6 @@ export default function KDSPage() {
     if (data?.action === 'new_order' || data?.action === 'status_change') {
        if (data.order?.status === 'PENDING') {
          notifier.playKDSBell();
-         notifier.sendPushNotification('New Kitchen Order', `Cooking required for Table ${data.order.tableNumber}`);
        }
     }
   };

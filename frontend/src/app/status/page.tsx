@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import api from "@/lib/api";
 import { socket } from "@/lib/socket";
 import { CheckCircle2, Clock, Flame, Monitor } from "lucide-react";
+import { notifier } from "@/lib/notifications";
 
 export default function StatusBoard() {
   const [preparingOrders, setPreparingOrders] = useState<any[]>([]);
@@ -11,10 +12,10 @@ export default function StatusBoard() {
   const [loading, setLoading] = useState(true);
   const [time, setTime] = useState(new Date());
   const [isOverlayVisible, setIsOverlayVisible] = useState(true);
-  const audioContextRef = useRef<AudioContext | null>(null);
   
   // Track IDs of orders already notified to prevent duplicate beeps
   const revealedIdsRef = useRef<Set<string>>(new Set());
+  const isFirstFetchRef = useRef(true);
 
   useEffect(() => {
     fetchOrders();
@@ -31,10 +32,10 @@ export default function StatusBoard() {
       // Modern browsers block AudioContext creation without user interaction.
       // If they bypass the start modal, hook onto their very first click anywhere on the page to silently boot the audio engine.
       const resume = () => {
-        if (!audioContextRef.current) {
+        if (!notifier.initialized) {
           handleStart();
-        } else if (audioContextRef.current.state === 'suspended') {
-          audioContextRef.current.resume();
+        } else {
+          notifier.initialize();
         }
         window.removeEventListener('click', resume);
       };
@@ -52,71 +53,11 @@ export default function StatusBoard() {
     setIsOverlayVisible(false);
     localStorage.setItem('status_board_joined', 'true');
     try {
-      const AudioContextClass = (window.AudioContext || (window as any).webkitAudioContext);
-      if (AudioContextClass) {
-        const context = new AudioContextClass();
-        audioContextRef.current = context;
-        if (context.state === 'suspended') {
-          await context.resume();
-        }
-        // Play a short test beep so the user knows audio is working
-        playNotificationSound();
-      }
+      await notifier.initialize();
+      // Play a short test beep so the user knows audio is working
+      notifier.playStatusBoardChime();
     } catch (e) {
       console.error("Audio init failed", e);
-    }
-  };
-
-  const playNotificationSound = async () => {
-    try {
-      const context = audioContextRef.current;
-      if (!context) return;
-
-      if (context.state === 'suspended') {
-        await context.resume();
-      }
-      
-      const now = context.currentTime;
-      
-      // We'll create a musical "Ding-Dong" chime using two sets of oscillators
-      const playTone = (freq: number, startTime: number, duration: number, volume: number = 0.4) => {
-        const osc = context.createOscillator();
-        const g = context.createGain();
-        
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(freq, startTime);
-        
-        // Bell-like harmonic
-        const harmonic = context.createOscillator();
-        harmonic.type = "triangle";
-        harmonic.frequency.setValueAtTime(freq * 1.5, startTime);
-        const gh = context.createGain();
-
-        osc.connect(g);
-        harmonic.connect(gh);
-        g.connect(context.destination);
-        gh.connect(context.destination);
-
-        g.gain.setValueAtTime(0, startTime);
-        g.gain.linearRampToValueAtTime(volume, startTime + 0.05);
-        g.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-
-        gh.gain.setValueAtTime(0, startTime);
-        gh.gain.linearRampToValueAtTime(volume * 0.3, startTime + 0.05);
-        gh.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-
-        osc.start(startTime);
-        harmonic.start(startTime);
-        osc.stop(startTime + duration);
-        harmonic.stop(startTime + duration);
-      };
-
-      // Play the musical chime: Note G5 followed by C5 (Classic Doorbell/Chime)
-      playTone(783.99, now, 0.8, 0.6); // G5
-      playTone(523.25, now + 0.4, 1.2, 0.6); // C5
-
-    } catch (e) {
-      console.error("Audio failed", e);
     }
   };
 
@@ -132,6 +73,8 @@ export default function StatusBoard() {
       
       // Check for new ready orders to trigger sound
       let hasNewReady = false;
+      const isInitialFetch = isFirstFetchRef.current;
+      
       ready.forEach((order: any) => {
         if (!revealedIdsRef.current.has(order.id)) {
           revealedIdsRef.current.add(order.id);
@@ -139,8 +82,13 @@ export default function StatusBoard() {
         }
       });
 
-      if (hasNewReady && !loading) {
-        playNotificationSound();
+      // Only play chime if it's NOT the first fetch of the session
+      if (hasNewReady && !isInitialFetch) {
+        notifier.playStatusBoardChime();
+      }
+
+      if (isInitialFetch) {
+        isFirstFetchRef.current = false;
       }
 
       setReadyOrders(ready);
