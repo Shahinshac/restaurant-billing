@@ -259,7 +259,7 @@ export default function StatusBoard() {
           </div>
           
           <button 
-            onClick={playNotificationSound}
+            onClick={() => notifier.playStatusBoardChime()}
             className="px-4 py-2 rounded-xl bg-zinc-900 border border-white/5 text-[9px] font-black uppercase tracking-widest hover:bg-zinc-800 transition-all"
             style={{ color: 'var(--text-dim)' }}
           >
